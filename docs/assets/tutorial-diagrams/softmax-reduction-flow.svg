@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="780" viewBox="0 0 1440 780">
+  <rect width="1440" height="780" fill="#f8fafc"/>
+  <text x="50" y="55" font-size="30" font-family="Arial, Helvetica, sans-serif" font-weight="700" fill="#0f172a">Softmax 图解：一行数据如何完成稳定归一化</text>
+  <text x="50" y="90" font-size="16" font-family="Arial, Helvetica, sans-serif" fill="#334155">关键不是公式难，而是把“读一行 → 找 max → 做 exp/sum → 再写回”组织成尽量少的数据往返</text>
+
+  <rect x="55" y="145" width="220" height="150" rx="16" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+  <text x="165" y="185" text-anchor="middle" font-size="22" font-family="Arial, Helvetica, sans-serif" font-weight="700" fill="#1d4ed8">① 读一整行</text>
+  <text x="165" y="225" text-anchor="middle" font-size="18" font-family="monospace" fill="#1e293b">x = tl.load(...)</text>
+  <text x="165" y="255" text-anchor="middle" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">mask 保护尾块</text>
+
+  <rect x="315" y="145" width="220" height="150" rx="16" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+  <text x="425" y="185" text-anchor="middle" font-size="22" font-family="Arial, Helvetica, sans-serif" font-weight="700" fill="#15803d">② 先减最大值</text>
+  <text x="425" y="225" text-anchor="middle" font-size="18" font-family="monospace" fill="#1e293b">m = tl.max(x)</text>
+  <text x="425" y="255" text-anchor="middle" font-size="18" font-family="monospace" fill="#1e293b">x_hat = x - m</text>
+
+  <rect x="575" y="145" width="220" height="150" rx="16" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+  <text x="685" y="185" text-anchor="middle" font-size="22" font-family="Arial, Helvetica, sans-serif" font-weight="700" fill="#92400e">③ 做 exp 与求和</text>
+  <text x="685" y="225" text-anchor="middle" font-size="18" font-family="monospace" fill="#1e293b">num = exp(x_hat)</text>
+  <text x="685" y="255" text-anchor="middle" font-size="18" font-family="monospace" fill="#1e293b">den = tl.sum(num)</text>
+
+  <rect x="835" y="145" width="220" height="150" rx="16" fill="#fae8ff" stroke="#a21caf" stroke-width="2"/>
+  <text x="945" y="185" text-anchor="middle" font-size="22" font-family="Arial, Helvetica, sans-serif" font-weight="700" fill="#86198f">④ 归一化</text>
+  <text x="945" y="225" text-anchor="middle" font-size="18" font-family="monospace" fill="#1e293b">y = num / den</text>
+  <text x="945" y="255" text-anchor="middle" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">每个元素都除同一分母</text>
+
+  <rect x="1095" y="145" width="140" height="150" rx="16" fill="#fee2e2" stroke="#ef4444" stroke-width="2"/>
+  <text x="1165" y="185" text-anchor="middle" font-size="22" font-family="Arial, Helvetica, sans-serif" font-weight="700" fill="#b91c1c">⑤ 写回</text>
+  <text x="1165" y="225" text-anchor="middle" font-size="18" font-family="monospace" fill="#1e293b">tl.store</text>
+
+  <path d="M275 220 L315 220" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#arrow)"/>
+  <path d="M535 220 L575 220" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#arrow)"/>
+  <path d="M795 220 L835 220" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#arrow)"/>
+  <path d="M1055 220 L1095 220" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#arrow)"/>
+
+  <rect x="60" y="360" width="1160" height="145" rx="16" fill="#ffffff" stroke="#94a3b8" stroke-width="2"/>
+  <text x="85" y="400" font-size="24" font-family="Arial, Helvetica, sans-serif" font-weight="700" fill="#0f172a">为什么 Softmax 常常是 memory-bound？</text>
+  <text x="85" y="440" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">因为这条路径本质上是“对一行数据做几次顺序处理”，算术密度并不高，但数据必须被完整读进来、完成 reduce、再写出去。</text>
+  <text x="85" y="470" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">真正值钱的是：尽量在片上把这一整行的逻辑做完，避免多次往返 HBM。</text>
+
+  <rect x="60" y="545" width="360" height="165" rx="16" fill="#eff6ff" stroke="#3b82f6" stroke-width="2"/>
+  <text x="85" y="585" font-size="22" font-family="Arial, Helvetica, sans-serif" font-weight="700" fill="#1d4ed8">第一原则</text>
+  <text x="85" y="625" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">必须先减 max，</text>
+  <text x="85" y="655" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">否则 exp 很容易在大 logits 下溢出/上溢。</text>
+
+  <rect x="460" y="545" width="360" height="165" rx="16" fill="#f0fdf4" stroke="#22c55e" stroke-width="2"/>
+  <text x="485" y="585" font-size="22" font-family="Arial, Helvetica, sans-serif" font-weight="700" fill="#15803d">第二原则</text>
+  <text x="485" y="625" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">max / sum 这种 reduce</text>
+  <text x="485" y="655" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">优先放到 FP32 路径理解和实现。</text>
+
+  <rect x="860" y="545" width="360" height="165" rx="16" fill="#fff7ed" stroke="#f97316" stroke-width="2"/>
+  <text x="885" y="585" font-size="22" font-family="Arial, Helvetica, sans-serif" font-weight="700" fill="#c2410c">第三原则</text>
+  <text x="885" y="625" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">如果一行放不下，问题就变成：</text>
+  <text x="885" y="655" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">如何做 chunked softmax / multi-pass softmax。</text>
+
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L10,3 L0,6 z" fill="#64748b"/>
+    </marker>
+  </defs>
+</svg>

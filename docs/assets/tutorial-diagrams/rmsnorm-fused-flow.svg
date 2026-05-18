@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="780" viewBox="0 0 1440 780">
+  <rect width="1440" height="780" fill="#f8fafc"/>
+  <text x="50" y="55" font-size="30" font-family="Arial, Helvetica, sans-serif" font-weight="700" fill="#0f172a">RMSNorm 图解：为什么它很适合做 fused kernel 练手对象</text>
+  <text x="50" y="90" font-size="16" font-family="Arial, Helvetica, sans-serif" fill="#334155">核心结构比 LayerNorm 更轻：只有 x² 的均值，不需要同时维护 mean 和 variance</text>
+
+  <rect x="60" y="145" width="210" height="155" rx="16" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+  <text x="165" y="185" text-anchor="middle" font-size="22" font-family="Arial, Helvetica, sans-serif" font-weight="700" fill="#1d4ed8">① 读入一行</text>
+  <text x="165" y="225" text-anchor="middle" font-size="18" font-family="monospace" fill="#1e293b">x = tl.load(...)</text>
+  <text x="165" y="255" text-anchor="middle" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">通常转 FP32 理解 reduce</text>
+
+  <rect x="310" y="145" width="220" height="155" rx="16" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+  <text x="420" y="185" text-anchor="middle" font-size="22" font-family="Arial, Helvetica, sans-serif" font-weight="700" fill="#15803d">② 做平方和归约</text>
+  <text x="420" y="225" text-anchor="middle" font-size="18" font-family="monospace" fill="#1e293b">mean_sq = sum(x*x) / d</text>
+  <text x="420" y="255" text-anchor="middle" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">这是唯一核心 reduce</text>
+
+  <rect x="570" y="145" width="220" height="155" rx="16" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+  <text x="680" y="185" text-anchor="middle" font-size="22" font-family="Arial, Helvetica, sans-serif" font-weight="700" fill="#92400e">③ 求逆 RMS</text>
+  <text x="680" y="225" text-anchor="middle" font-size="18" font-family="monospace" fill="#1e293b">inv_rms = rsqrt(mean_sq + eps)</text>
+  <text x="680" y="255" text-anchor="middle" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">通常优先 rsqrt</text>
+
+  <rect x="830" y="145" width="200" height="155" rx="16" fill="#fae8ff" stroke="#a21caf" stroke-width="2"/>
+  <text x="930" y="185" text-anchor="middle" font-size="22" font-family="Arial, Helvetica, sans-serif" font-weight="700" fill="#86198f">④ 做缩放</text>
+  <text x="930" y="225" text-anchor="middle" font-size="18" font-family="monospace" fill="#1e293b">y = x * inv_rms * w</text>
+  <text x="930" y="255" text-anchor="middle" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">可和归一化一起融合</text>
+
+  <rect x="1070" y="145" width="150" height="155" rx="16" fill="#fee2e2" stroke="#ef4444" stroke-width="2"/>
+  <text x="1145" y="185" text-anchor="middle" font-size="22" font-family="Arial, Helvetica, sans-serif" font-weight="700" fill="#b91c1c">⑤ 写回</text>
+  <text x="1145" y="225" text-anchor="middle" font-size="18" font-family="monospace" fill="#1e293b">tl.store</text>
+
+  <path d="M270 222 L310 222" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#arrow)"/>
+  <path d="M530 222 L570 222" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#arrow)"/>
+  <path d="M790 222 L830 222" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#arrow)"/>
+  <path d="M1030 222 L1070 222" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#arrow)"/>
+
+  <rect x="60" y="360" width="560" height="325" rx="16" fill="#ffffff" stroke="#94a3b8" stroke-width="2"/>
+  <text x="85" y="400" font-size="24" font-family="Arial, Helvetica, sans-serif" font-weight="700" fill="#0f172a">为什么它比 LayerNorm 更适合教学入门？</text>
+  <text x="85" y="445" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">RMSNorm 只需要 mean(x²)，不需要同时维护：</text>
+  <text x="125" y="478" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">- mean(x)</text>
+  <text x="125" y="508" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">- var(x)</text>
+  <text x="85" y="555" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">所以它更容易让你把注意力集中到：</text>
+  <text x="125" y="588" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">1. reduce 精度</text>
+  <text x="125" y="618" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">2. 融合带来的 HBM 节省</text>
+  <text x="125" y="648" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">3. mask 与整行处理的正确性</text>
+
+  <rect x="660" y="360" width="560" height="325" rx="16" fill="#fff7ed" stroke="#f97316" stroke-width="2"/>
+  <text x="685" y="400" font-size="24" font-family="Arial, Helvetica, sans-serif" font-weight="700" fill="#c2410c">最该记住的 3 条实现直觉</text>
+  <text x="685" y="445" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">① `x * x` 和 reduce 路径优先走 FP32 理解与实现</text>
+  <text x="685" y="485" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">② `rsqrt(mean_sq + eps)` 通常比 `sqrt + divide` 更自然</text>
+  <text x="685" y="525" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">③ 真正值钱的是把“读 x → reduce → 归一化 → 乘 weight → 写回”尽量放在同一个 kernel 里</text>
+  <text x="685" y="585" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">一旦拆成太多 eager 小步，中间结果就会频繁往返 HBM，收益会被吃掉。</text>
+
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L10,3 L0,6 z" fill="#64748b"/>
+    </marker>
+  </defs>
+</svg>

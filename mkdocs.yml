@@ -1,0 +1,58 @@
+site_name: GPU Kernel 开发教程
+site_description: 深入理解 GPU 架构与 Kernel 优化技术
+site_author: zilla
+
+repo_name: zillaru/gpu-kernel-tutorial
+repo_url: https://github.com/zillaru/gpu-kernel-tutorial
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+
+nav:
+  - 首页: index.md
+  - 第一章 GPU执行模型: chapter1-tier1-tier2.md
+  - 第二章 计算优化: chapter2-tier3-tier4.md
+  - 第三章 架构优化: chapter3-tier5-arch.md
+  - 第四章 算子技能: chapter4-kernel-skills.md
+  - 第五章 系统工作流: chapter5-system-skills.md
+  - 模板集: 最小可运行模板集.md
+  - 术语表: 术语表与通用坑清单.md
+  - 章节依赖: 章节依赖图与读者画像建议.md
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - admonition
+  - pymdownx.details
+  - attr_list
+  - md_in_html
+  - toc:
+      permalink: true
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/zillaru

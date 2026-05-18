@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="820" viewBox="0 0 1440 820">
+  <rect width="1440" height="820" fill="#f8fafc"/>
+  <text x="50" y="55" font-size="30" font-family="Arial, Helvetica, sans-serif" font-weight="700" fill="#0f172a">MoE 图解：真正难点常常在路由与不均匀，而不是单个 GEMM</text>
+  <text x="50" y="90" font-size="16" font-family="Arial, Helvetica, sans-serif" fill="#334155">MoE 的数据流通常是：路由 → 按 expert 聚集 → expert 计算 → 再散回原顺序；其中任何一步不均匀都可能吃掉性能</text>
+
+  <rect x="55" y="150" width="200" height="130" rx="16" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+  <text x="155" y="190" text-anchor="middle" font-size="22" font-family="Arial, Helvetica, sans-serif" font-weight="700" fill="#1d4ed8">① 输入 tokens</text>
+  <text x="155" y="225" text-anchor="middle" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">原始 batch / sequence</text>
+
+  <rect x="305" y="150" width="220" height="130" rx="16" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+  <text x="415" y="190" text-anchor="middle" font-size="22" font-family="Arial, Helvetica, sans-serif" font-weight="700" fill="#15803d">② gate / route</text>
+  <text x="415" y="225" text-anchor="middle" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">决定 token 去哪个 expert</text>
+
+  <rect x="585" y="130" width="200" height="90" rx="14" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+  <text x="685" y="185" text-anchor="middle" font-size="20" font-family="Arial, Helvetica, sans-serif" font-weight="700" fill="#92400e">Expert 0</text>
+  <rect x="585" y="255" width="200" height="90" rx="14" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+  <text x="685" y="310" text-anchor="middle" font-size="20" font-family="Arial, Helvetica, sans-serif" font-weight="700" fill="#92400e">Expert 1</text>
+  <rect x="585" y="380" width="200" height="90" rx="14" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+  <text x="685" y="435" text-anchor="middle" font-size="20" font-family="Arial, Helvetica, sans-serif" font-weight="700" fill="#92400e">Expert 2</text>
+
+  <rect x="850" y="150" width="220" height="130" rx="16" fill="#fae8ff" stroke="#a21caf" stroke-width="2"/>
+  <text x="960" y="190" text-anchor="middle" font-size="22" font-family="Arial, Helvetica, sans-serif" font-weight="700" fill="#86198f">③ expert 计算</text>
+  <text x="960" y="225" text-anchor="middle" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">很多小而不均匀的 GEMM</text>
+
+  <rect x="1110" y="150" width="120" height="130" rx="16" fill="#fee2e2" stroke="#ef4444" stroke-width="2"/>
+  <text x="1170" y="190" text-anchor="middle" font-size="22" font-family="Arial, Helvetica, sans-serif" font-weight="700" fill="#b91c1c">④ gather</text>
+  <text x="1170" y="225" text-anchor="middle" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">散回原顺序</text>
+
+  <path d="M255 215 L305 215" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#arrow)"/>
+  <path d="M525 215 L585 175" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#arrow)"/>
+  <path d="M525 215 L585 300" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#arrow)"/>
+  <path d="M525 215 L585 425" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#arrow)"/>
+  <path d="M785 175 L850 175" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#arrow)"/>
+  <path d="M785 300 L850 215" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#arrow)"/>
+  <path d="M785 425 L850 255" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#arrow)"/>
+  <path d="M1070 215 L1110 215" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#arrow)"/>
+
+  <rect x="60" y="540" width="1160" height="210" rx="16" fill="#ffffff" stroke="#94a3b8" stroke-width="2"/>
+  <text x="85" y="580" font-size="24" font-family="Arial, Helvetica, sans-serif" font-weight="700" fill="#0f172a">为什么 MoE 不能只盯 expert GEMM？</text>
+  <text x="85" y="620" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">因为性能损失可能发生在 4 个地方：</text>
+  <text x="125" y="655" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">1. route / dispatch 本身的搬运成本</text>
+  <text x="125" y="685" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">2. padding 导致的空算</text>
+  <text x="125" y="715" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">3. expert 之间 token 数极不均匀，导致负载失衡</text>
+  <text x="665" y="655" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">4. 很多小 GEMM 反复 launch，造成明显 latency overhead</text>
+  <text x="665" y="695" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">因此 persistent / grouped 调度在 MoE 里经常比“单个 GEMM 极限调优”更值钱。</text>
+
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L10,3 L0,6 z" fill="#64748b"/>
+    </marker>
+  </defs>
+</svg>
