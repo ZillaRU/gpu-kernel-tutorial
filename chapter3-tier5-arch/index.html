@@ -1,0 +1,2143 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="深入理解 GPU 架构与 Kernel 优化技术">
+      
+      
+        <meta name="author" content="zilla">
+      
+      
+      
+        <link rel="prev" href="../chapter2-tier3-tier4/">
+      
+      
+        <link rel="next" href="../chapter4-kernel-skills/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>第三章 架构优化 - GPU Kernel 开发教程</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#tier-5" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="GPU Kernel 开发教程" class="md-header__button md-logo" aria-label="GPU Kernel 开发教程" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            GPU Kernel 开发教程
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              第三章 架构优化
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/zillaru/gpu-kernel-tutorial" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    zillaru/gpu-kernel-tutorial
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  首页
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../chapter1-tier1-tier2/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  第一章 GPU执行模型
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../chapter2-tier3-tier4/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  第二章 计算优化
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
+        
+  
+  
+    
+  
+  第三章 架构优化
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../chapter4-kernel-skills/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  第四章 算子技能
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../chapter5-system-skills/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  第五章 系统工作流
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../%E6%9C%80%E5%B0%8F%E5%8F%AF%E8%BF%90%E8%A1%8C%E6%A8%A1%E6%9D%BF%E9%9B%86/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  模板集
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../%E6%9C%AF%E8%AF%AD%E8%A1%A8%E4%B8%8E%E9%80%9A%E7%94%A8%E5%9D%91%E6%B8%85%E5%8D%95/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  术语表
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../%E7%AB%A0%E8%8A%82%E4%BE%9D%E8%B5%96%E5%9B%BE%E4%B8%8E%E8%AF%BB%E8%80%85%E7%94%BB%E5%83%8F%E5%BB%BA%E8%AE%AE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  章节依赖
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="GPU Kernel 开发教程" class="md-nav__button md-logo" aria-label="GPU Kernel 开发教程" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    GPU Kernel 开发教程
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/zillaru/gpu-kernel-tutorial" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    zillaru/gpu-kernel-tutorial
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    首页
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../chapter1-tier1-tier2/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    第一章 GPU执行模型
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../chapter2-tier3-tier4/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    第二章 计算优化
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    第三章 架构优化
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    第三章 架构优化
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        本章技能卡
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-tier-5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. 为什么需要 Tier 5
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-bank-conflict" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. 先讲一个所有平台都绕不过去的问题：bank conflict
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. 先讲一个所有平台都绕不过去的问题：bank conflict">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-bank" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1 什么是 bank
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-bank-conflict" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2 bank conflict 怎么发生
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#23" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.3 为什么转置是经典陷阱
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#24-bank-conflict" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4 bank conflict 的正确工程态度
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-nvidiaampereadahopper" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. NVIDIA：Ampere、Ada、Hopper 各自意味着什么
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. NVIDIA：Ampere、Ada、Hopper 各自意味着什么">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-amperea100" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.1 Ampere（A100）
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3.1 Ampere（A100）">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        你应该带走的直觉
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-adartx-4090" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.2 Ada（RTX 4090 一类消费级高端卡）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-hopperh100" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.3 Hopper（H100）
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3.3 Hopper（H100）">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#triton" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        重要提醒：区分“硬件概念”和“你现在就能在 Triton 里直接用的东西”
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-amd-rocm-cdna-cuda" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. AMD ROCm / CDNA：不要把它当“只是另一个 CUDA 后端”
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. AMD ROCm / CDNA：不要把它当“只是另一个 CUDA 后端”">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-wavefront-64" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 Wavefront-64 对思维方式的影响
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-mfma-amd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 MFMA 是 AMD 侧矩阵乘核心
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43-waves_per_eu" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.3 waves_per_eu 应该怎么理解
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#44-rocm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.4 不要把 ROCm 平台判断写错
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. 架构差异应该如何翻译成调参策略
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. 架构差异应该如何翻译成调参策略">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 一个更实用的对照表
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 对教程作者来说，最重要的写法规范
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5.2 对教程作者来说，最重要的写法规范">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#a" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A. 架构事实
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#b" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        B. 对实现的影响
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#c" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        C. 代码能否直接照抄
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-kernel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. 一个更靠谱的“跨平台 kernel”写法原则
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. 本章图解回顾
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. 本章自测
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="8. 本章自测">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        问题 1
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        问题 2
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        问题 3
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        问题 4
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. 本章答案
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="9. 本章答案">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        答案 1
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        答案 2
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        答案 3
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        答案 4
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. 本章小结
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="10. 本章小结">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        进入下一章前，请确认你已经会
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../chapter4-kernel-skills/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    第四章 算子技能
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../chapter5-system-skills/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    第五章 系统工作流
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../%E6%9C%80%E5%B0%8F%E5%8F%AF%E8%BF%90%E8%A1%8C%E6%A8%A1%E6%9D%BF%E9%9B%86/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    模板集
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../%E6%9C%AF%E8%AF%AD%E8%A1%A8%E4%B8%8E%E9%80%9A%E7%94%A8%E5%9D%91%E6%B8%85%E5%8D%95/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    术语表
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../%E7%AB%A0%E8%8A%82%E4%BE%9D%E8%B5%96%E5%9B%BE%E4%B8%8E%E8%AF%BB%E8%80%85%E7%94%BB%E5%83%8F%E5%BB%BA%E8%AE%AE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    章节依赖
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        本章技能卡
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-tier-5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. 为什么需要 Tier 5
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-bank-conflict" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. 先讲一个所有平台都绕不过去的问题：bank conflict
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. 先讲一个所有平台都绕不过去的问题：bank conflict">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-bank" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1 什么是 bank
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-bank-conflict" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2 bank conflict 怎么发生
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#23" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.3 为什么转置是经典陷阱
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#24-bank-conflict" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4 bank conflict 的正确工程态度
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-nvidiaampereadahopper" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. NVIDIA：Ampere、Ada、Hopper 各自意味着什么
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. NVIDIA：Ampere、Ada、Hopper 各自意味着什么">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-amperea100" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.1 Ampere（A100）
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3.1 Ampere（A100）">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        你应该带走的直觉
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-adartx-4090" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.2 Ada（RTX 4090 一类消费级高端卡）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-hopperh100" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.3 Hopper（H100）
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3.3 Hopper（H100）">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#triton" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        重要提醒：区分“硬件概念”和“你现在就能在 Triton 里直接用的东西”
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-amd-rocm-cdna-cuda" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. AMD ROCm / CDNA：不要把它当“只是另一个 CUDA 后端”
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. AMD ROCm / CDNA：不要把它当“只是另一个 CUDA 后端”">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-wavefront-64" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 Wavefront-64 对思维方式的影响
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-mfma-amd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 MFMA 是 AMD 侧矩阵乘核心
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43-waves_per_eu" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.3 waves_per_eu 应该怎么理解
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#44-rocm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.4 不要把 ROCm 平台判断写错
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. 架构差异应该如何翻译成调参策略
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. 架构差异应该如何翻译成调参策略">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 一个更实用的对照表
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 对教程作者来说，最重要的写法规范
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5.2 对教程作者来说，最重要的写法规范">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#a" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A. 架构事实
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#b" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        B. 对实现的影响
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#c" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        C. 代码能否直接照抄
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-kernel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. 一个更靠谱的“跨平台 kernel”写法原则
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. 本章图解回顾
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. 本章自测
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="8. 本章自测">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        问题 1
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        问题 2
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        问题 3
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        问题 4
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. 本章答案
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="9. 本章答案">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        答案 1
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        答案 2
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        答案 3
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        答案 4
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. 本章小结
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="10. 本章小结">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        进入下一章前，请确认你已经会
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="tier-5">第三章：Tier 5 —— 架构特定优化<a class="headerlink" href="#tier-5" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>学习目标：知道“同一个 kernel 在不同 GPU 上为什么最优解不同”，并且学会把架构特性翻译成调参/实现选择，而不是背名词。</p>
+</blockquote>
+<h2 id="_1">本章技能卡<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>项目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>对应层级</td>
+<td>Tier 5</td>
+</tr>
+<tr>
+<td>关注对象</td>
+<td>Ampere / Ada / Hopper / AMD CDNA / ROCm</td>
+</tr>
+<tr>
+<td>核心问题</td>
+<td>同一个算法骨架，为什么不同架构的最优参数和实现路径会不同</td>
+</tr>
+<tr>
+<td>读完应能回答</td>
+<td>bank conflict 为什么是共性问题；哪些特性是平台专属而不是跨平台“默认存在”</td>
+</tr>
+<tr>
+<td>最重要产出</td>
+<td>学会把“架构事实 → 对实现的影响 → 参数/路径选择”串起来</td>
+</tr>
+</tbody>
+</table>
+<p>配套导航：如果你还没建立 Tier 1~4 的共性框架，建议先看前两章；整套顺序见 <a href="./学习路径-总目录.md">学习路径-总目录</a>。</p>
+<p>配套资料：
+- <a href="../%E6%9C%80%E5%B0%8F%E5%8F%AF%E8%BF%90%E8%A1%8C%E6%A8%A1%E6%9D%BF%E9%9B%86/#模板-3第三章最小架构检测脚本">最小可运行模板集：模板 3（架构检测脚本）</a>
+- <a href="../%E6%9C%AF%E8%AF%AD%E8%A1%A8%E4%B8%8E%E9%80%9A%E7%94%A8%E5%9D%91%E6%B8%85%E5%8D%95/">术语表与通用坑清单</a></p>
+<hr />
+<h2 id="1-tier-5">1. 为什么需要 Tier 5<a class="headerlink" href="#1-tier-5" title="Permanent link">&para;</a></h2>
+<p>前两章讲的是跨平台都成立的共性：</p>
+<ul>
+<li>tile 怎么切；</li>
+<li>数据怎么搬；</li>
+<li>什么时候融合；</li>
+<li>什么时候改调度。</li>
+</ul>
+<p>但你做完这些之后，仍然会遇到一个现实问题：</p>
+<blockquote>
+<p>A100 上表现很好的 kernel，搬到 H100 不一定自动更快；4090 上能跑的配置，搬到 MI300X 也不一定合理。</p>
+</blockquote>
+<p>原因不是“代码变差了”，而是因为不同架构在下面这些方面并不一样：</p>
+<ol>
+<li>执行粒度；</li>
+<li>共享存储/缓存组织；</li>
+<li>矩阵乘指令形态；</li>
+<li>异步搬运能力；</li>
+<li>带宽与算力的平衡。</li>
+</ol>
+<p>Tier 5 的任务就是把这些差异翻译成：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>哪些 kernel 应该走哪条实现路径
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>哪些参数范围值得搜
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>哪些“最佳实践”其实只对某代硬件成立
+</code></pre></div>
+<hr />
+<h2 id="2-bank-conflict">2. 先讲一个所有平台都绕不过去的问题：bank conflict<a class="headerlink" href="#2-bank-conflict" title="Permanent link">&para;</a></h2>
+<h3 id="21-bank">2.1 什么是 bank<a class="headerlink" href="#21-bank" title="Permanent link">&para;</a></h3>
+<p>共享存储（NVIDIA 的 SMEM，AMD 的 LDS）为了并发访问，不是一个单口数组，而是被分成很多 bank。</p>
+<p>对 NVIDIA 常见共享存储，一个够用的近似模型是：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>bank_id ≈ (byte_addr / bank_width) % num_banks
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>常见可近似记成：bank_width = 4 bytes, num_banks = 32
+</code></pre></div>
+<p>请注意这里强调的是 <strong>byte_addr</strong> 与 <strong>bank_width</strong> 的关系，而不是偷懒写成 <code>addr % 32</code>。教学时最好把这个口径说严谨，否则很容易把“元素索引”和“字节地址”混掉。</p>
+<h3 id="22-bank-conflict">2.2 bank conflict 怎么发生<a class="headerlink" href="#22-bank-conflict" title="Permanent link">&para;</a></h3>
+<p>理想情况：</p>
+<ul>
+<li>一个 warp 内的 lane 打到不同 bank；</li>
+<li>访问可以并行完成。</li>
+</ul>
+<p>冲突情况：</p>
+<ul>
+<li>多个 lane 同时打到同一个 bank；</li>
+<li>硬件需要串行化这些访问。</li>
+</ul>
+<p>特殊情况：</p>
+<ul>
+<li>所有 lane 访问的是同一个地址；</li>
+<li>很多架构能做广播，这不一定构成最坏冲突。</li>
+</ul>
+<h3 id="23">2.3 为什么转置是经典陷阱<a class="headerlink" href="#23" title="Permanent link">&para;</a></h3>
+<p>考虑：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kt">__shared__</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">tile</span><span class="p">[</span><span class="mi">32</span><span class="p">][</span><span class="mi">32</span><span class="p">];</span>
+</code></pre></div>
+<p>按行读时，通常 bank 分布比较自然；按列读时，连续 lane 可能反复落到同一个 bank，于是出现冲突。</p>
+<p>经典修复：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kt">__shared__</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">tile</span><span class="p">[</span><span class="mi">32</span><span class="p">][</span><span class="mi">33</span><span class="p">];</span>
+</code></pre></div>
+<p>这里多出来的一列不是“浪费”，而是为了改变 bank 映射。</p>
+<h3 id="24-bank-conflict">2.4 bank conflict 的正确工程态度<a class="headerlink" href="#24-bank-conflict" title="Permanent link">&para;</a></h3>
+<p>不要死记“某种模式一定 32-way conflict”，更好的工程态度是：</p>
+<ol>
+<li>先用心智模型预测风险；</li>
+<li>再用 profiler 验证；</li>
+<li>最后用 padding / swizzle / 改访问顺序修正。</li>
+</ol>
+<p>这比背一堆表格更稳。</p>
+<p>先看图，再把“转置为什么容易冲突、padding 为什么能破局”这件事彻底想清楚：</p>
+<p><img alt="bank conflict 与 padding 图" src="../assets/tutorial-diagrams/bank-conflict-padding.svg" /></p>
+<hr />
+<h2 id="3-nvidiaampereadahopper">3. NVIDIA：Ampere、Ada、Hopper 各自意味着什么<a class="headerlink" href="#3-nvidiaampereadahopper" title="Permanent link">&para;</a></h2>
+<p>下面不追求穷举硬件规格，而是强调“对 kernel 设计最有用的差异”。</p>
+<h3 id="31-amperea100">3.1 Ampere（A100）<a class="headerlink" href="#31-amperea100" title="Permanent link">&para;</a></h3>
+<p>对 kernel 优化最关键的关键词通常是：</p>
+<ol>
+<li><strong>成熟的 Tensor Core 路径</strong>；</li>
+<li><strong><code>cp.async</code> 风格的异步搬运/流水重叠</strong>；</li>
+<li><strong>TF32 在训练/推理中的实用性</strong>。</li>
+</ol>
+<h4 id="_2">你应该带走的直觉<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h4>
+<ul>
+<li>如果 kernel 受制于 global-&gt;shared 的搬运与计算重叠，Ampere 的异步流水能力很重要；</li>
+<li>如果是 FP32 训练类 GEMM，TF32 让“动态范围保留 + 更高吞吐”成为可能；</li>
+<li>很多 Ampere 上的高性能 GEMM，都非常依赖合适的 pipeline 深度与 Tensor Core 友好 tile。</li>
+</ul>
+<h3 id="32-adartx-4090">3.2 Ada（RTX 4090 一类消费级高端卡）<a class="headerlink" href="#32-adartx-4090" title="Permanent link">&para;</a></h3>
+<p>Ada 常被误解成“缩水 Hopper”。更准确的工程视角是：</p>
+<blockquote>
+<p>Ada 仍然很强，但在很多实际推理场景里，<strong>带宽约束与消费级定位</strong> 会比“是否拥有某个数据中心特性”更重要。</p>
+</blockquote>
+<p>这意味着：</p>
+<ul>
+<li>对 compute-bound GEMM，它仍然很有竞争力；</li>
+<li>对 memory-bound 小算子，fusion、L2 locality、向量化加载会更值钱；</li>
+<li>不要想当然把 Hopper 专属特性当成 Ada 的必然路径。</li>
+</ul>
+<p>一个文档中更安全的写法是：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>Ada 优先关注：
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>1. 减少 HBM/GDDR 往返
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>2. 做好 locality
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>3. 让 tile 和流水不要过度吃资源
+</code></pre></div>
+<p>而不是把重点放在不存在的硬件能力上。</p>
+<h3 id="33-hopperh100">3.3 Hopper（H100）<a class="headerlink" href="#33-hopperh100" title="Permanent link">&para;</a></h3>
+<p>Hopper 最该记住的不是“又快了一些”，而是：</p>
+<ol>
+<li><strong>异步数据搬运能力更强</strong>；</li>
+<li><strong>矩阵乘指令与协作粒度更进一步</strong>；</li>
+<li><strong>cluster / 更复杂片上协作模式开始变得实用</strong>。</li>
+</ol>
+<h4 id="triton">重要提醒：区分“硬件概念”和“你现在就能在 Triton 里直接用的东西”<a class="headerlink" href="#triton" title="Permanent link">&para;</a></h4>
+<p>很多文档最容易犯的错，是把 Hopper 特性写成“几行 API 就能直接照抄”的教程。更好的说法应该是：</p>
+<ul>
+<li>Hopper 的强项在于更强的 tile 级搬运和矩阵计算协同；</li>
+<li>这些能力会影响最佳实现路径；</li>
+<li>但具体接口往往依赖 CUDA 版本、编程模型、库支持与编译器能力；</li>
+<li>写教学文档时，应该优先解释 <strong>为什么它能更快</strong>，而不是给出一个半真半假的伪 API 示例。</li>
+</ul>
+<p>所以本章不会把 TMA/WGMMA 写成“最小可运行代码”，而是把它们当 <strong>架构能力认知</strong> 来讲。</p>
+<hr />
+<h2 id="4-amd-rocm-cdna-cuda">4. AMD ROCm / CDNA：不要把它当“只是另一个 CUDA 后端”<a class="headerlink" href="#4-amd-rocm-cdna-cuda" title="Permanent link">&para;</a></h2>
+<h3 id="41-wavefront-64">4.1 Wavefront-64 对思维方式的影响<a class="headerlink" href="#41-wavefront-64" title="Permanent link">&para;</a></h3>
+<p>AMD 上最先要建立的直觉不是某条指令名，而是：</p>
+<blockquote>
+<p>执行基本粒度经常是 64-lane wavefront，而不是 32-lane warp。</p>
+</blockquote>
+<p>这会直接影响：</p>
+<ul>
+<li>分支分歧代价的体感；</li>
+<li>block/program 的资源压力；</li>
+<li>某些 tile 形状是否自然；</li>
+<li><code>num_warps</code> 同样取值时的资源消耗感受。</li>
+</ul>
+<p>因此很多在 NVIDIA 上“刚刚好”的配置，搬到 AMD 上会显得更重。</p>
+<h3 id="42-mfma-amd">4.2 MFMA 是 AMD 侧矩阵乘核心<a class="headerlink" href="#42-mfma-amd" title="Permanent link">&para;</a></h3>
+<p>对 AMD 的矩阵优化，最关键的概念词通常是 <strong>MFMA</strong>。</p>
+<p>工程上你更该关心的是：</p>
+<ol>
+<li>你的 tile / dtype 是否走到了 MFMA 友好的路径；</li>
+<li>K 维分块是否符合它偏好的形状；</li>
+<li>是否因为错误的 <code>BLOCK_K</code> 或布局选择退回了普通向量 ALU 路径。</li>
+</ol>
+<p>所以文档里给 AMD 的建议应该是：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>优先把代码写成让编译器有机会映射到 MFMA
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>再通过 autotune 搜索 BLOCK_K / num_warps / waves_per_eu
+</code></pre></div>
+<p>而不是直接承诺某个固定参数永远最好。</p>
+<h3 id="43-waves_per_eu">4.3 <code>waves_per_eu</code> 应该怎么理解<a class="headerlink" href="#43-waves_per_eu" title="Permanent link">&para;</a></h3>
+<p>把它当成“单个执行单元愿意同时背多少个 wave 的压力旋钮”更容易理解。</p>
+<ul>
+<li>更小：每个 wave 资源更宽裕，适合更重的计算路径；</li>
+<li>更大：更利于隐藏延迟，适合更偏 memory-bound 的情况。</li>
+</ul>
+<p>和 NVIDIA 的思路是相通的：</p>
+<blockquote>
+<p>不是在追求抽象上的高 occupancy，而是在找“资源压力”和“延迟隐藏”之间的平衡点。</p>
+</blockquote>
+<h3 id="44-rocm">4.4 不要把 ROCm 平台判断写错<a class="headerlink" href="#44-rocm" title="Permanent link">&para;</a></h3>
+<p>写跨平台教程时，最常见的错误之一是：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">():</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>    <span class="c1"># NVIDIA</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>    <span class="c1"># AMD</span>
+</code></pre></div>
+<p>这在 PyTorch + ROCm 语义下并不成立，因为 AMD 往往也走 <code>torch.cuda</code> 接口表面。</p>
+<p>更稳妥的检查方式应当是结合：</p>
+<ul>
+<li><code>torch.version.hip</code> 是否存在；</li>
+<li><code>torch.cuda.get_device_name()</code> 的供应商/型号信息；</li>
+<li>更上层的运行环境配置。</li>
+</ul>
+<p>也就是说，教程里如果要展示跨平台判断，必须先把这个前提讲对。</p>
+<hr />
+<h2 id="5">5. 架构差异应该如何翻译成调参策略<a class="headerlink" href="#5" title="Permanent link">&para;</a></h2>
+<h3 id="51">5.1 一个更实用的对照表<a class="headerlink" href="#51" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>Ampere/Ada 常见关注点</th>
+<th>Hopper 常见关注点</th>
+<th>AMD CDNA 常见关注点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>执行粒度</td>
+<td>warp-32</td>
+<td>warp-group / 更强协作</td>
+<td>wavefront-64</td>
+</tr>
+<tr>
+<td>核心矩阵路径</td>
+<td>Tensor Core</td>
+<td>更强矩阵路径与搬运协同</td>
+<td>MFMA</td>
+</tr>
+<tr>
+<td>搬运与流水</td>
+<td>异步流水已经重要</td>
+<td>异步搬运更关键</td>
+<td>LDS/L2/全局带宽平衡</td>
+</tr>
+<tr>
+<td>调参风险</td>
+<td>带宽与资源平衡</td>
+<td>复杂协作引入新约束</td>
+<td>相同参数会更吃资源</td>
+</tr>
+</tbody>
+</table>
+<h3 id="52">5.2 对教程作者来说，最重要的写法规范<a class="headerlink" href="#52" title="Permanent link">&para;</a></h3>
+<p>如果你在写“架构特定优化”章节，建议强制区分三类内容：</p>
+<h4 id="a">A. 架构事实<a class="headerlink" href="#a" title="Permanent link">&para;</a></h4>
+<p>例如：执行粒度、典型矩阵指令类型、是否具备某类异步搬运能力。</p>
+<h4 id="b">B. 对实现的影响<a class="headerlink" href="#b" title="Permanent link">&para;</a></h4>
+<p>例如：</p>
+<ul>
+<li>更适合什么 tile 形状；</li>
+<li>哪些参数更值得搜；</li>
+<li>哪些优化在这个平台 ROI 更高。</li>
+</ul>
+<h4 id="c">C. 代码能否直接照抄<a class="headerlink" href="#c" title="Permanent link">&para;</a></h4>
+<p>这一类最容易误导。若不能保证最小可运行，就应该明确标注：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>这是结构示意，不是可直接复制的模板。
+</code></pre></div>
+<p>这比给一段看起来很像 API、但上下文不全的代码要负责任得多。</p>
+<p>把“架构事实 -&gt; 实现影响 -&gt; 参数与路径选择”的翻译过程画成一张图，会更容易避免把概念写成伪教程：</p>
+<p><img alt="Tier 5 转译图" src="../assets/tutorial-diagrams/tier5-translation-map.svg" /></p>
+<hr />
+<h2 id="6-kernel">6. 一个更靠谱的“跨平台 kernel”写法原则<a class="headerlink" href="#6-kernel" title="Permanent link">&para;</a></h2>
+<p>跨平台不意味着“一份固定参数跑天下”，而是：</p>
+<ol>
+<li><strong>算法结构尽量共用</strong>；</li>
+<li><strong>参数空间按平台分开搜</strong>；</li>
+<li><strong>平台专属能力通过可选路径启用</strong>；</li>
+<li><strong>验证与 benchmark 也分平台记录</strong>。</li>
+</ol>
+<p>换句话说：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>共享的是算法骨架
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>不共享的是最优参数与某些专属实现路径
+</code></pre></div>
+<p>这是比“到处 if/else 硬切平台”更健康的组织方式。</p>
+<hr />
+<h2 id="7">7. 本章图解回顾<a class="headerlink" href="#7" title="Permanent link">&para;</a></h2>
+<p>第三章最值得反复回看的核心图，优先是这两张：</p>
+<ul>
+<li>bank conflict 与 padding 图：<a href="./#2-先讲一个所有平台都绕不过去的问题bank-conflict">第二节图解</a></li>
+<li>Tier 5 转译图：<a href="./#5-架构差异应该如何翻译成调参策略">第五节图解</a></li>
+</ul>
+<p>如果你把这两张图连起来看，最该形成的是这样一条稳定思路：</p>
+<ol>
+<li>先用 bank 映射心智模型识别访问风险；</li>
+<li>再把架构事实翻译成 tile、流水、矩阵路径和调参空间；</li>
+<li>明确区分“概念解释”“实现影响”“可运行模板”三层；</li>
+<li>接受跨平台共享的是算法骨架，而不是固定参数。</li>
+</ol>
+<p>如果你想把第三章和整套教程的其他图一起离线复习，也可以直接回看：</p>
+<ul>
+<li><a href="../%E6%9C%80%E5%B0%8F%E5%8F%AF%E8%BF%90%E8%A1%8C%E6%A8%A1%E6%9D%BF%E9%9B%86/#0-统一图例先看颜色语义再翻图">统一图例</a></li>
+<li><a href="./学习路径-总目录.md#图解索引适合复习或断网速查">图解索引</a></li>
+<li><a href="../%E6%9C%80%E5%B0%8F%E5%8F%AF%E8%BF%90%E8%A1%8C%E6%A8%A1%E6%9D%BF%E9%9B%86/#图解速查附录离线版">图解速查附录</a></li>
+</ul>
+<hr />
+<h2 id="8">8. 本章自测<a class="headerlink" href="#8" title="Permanent link">&para;</a></h2>
+<h3 id="1">问题 1<a class="headerlink" href="#1" title="Permanent link">&para;</a></h3>
+<p>为什么 bank conflict 的教学表述里，最好写成 <code>(byte_addr / bank_width) % num_banks</code>，而不是偷懒写成 <code>addr % 32</code>？</p>
+<h3 id="2">问题 2<a class="headerlink" href="#2" title="Permanent link">&para;</a></h3>
+<p>为什么说 Ada 上很多 memory-bound 小算子的优化重点，往往不是“更复杂的矩阵协作特性”，而是 fusion 与 locality？</p>
+<h3 id="3">问题 3<a class="headerlink" href="#3" title="Permanent link">&para;</a></h3>
+<p>AMD 上为什么同样的 <code>num_warps</code> 配置，常常会让人感觉“更重”？</p>
+<h3 id="4">问题 4<a class="headerlink" href="#4" title="Permanent link">&para;</a></h3>
+<p>为什么写架构特定教程时，必须明确区分“架构概念说明”和“可直接运行代码模板”？</p>
+<hr />
+<h2 id="9">9. 本章答案<a class="headerlink" href="#9" title="Permanent link">&para;</a></h2>
+<h3 id="1_1">答案 1<a class="headerlink" href="#1_1" title="Permanent link">&para;</a></h3>
+<p>因为 bank 映射本质依赖字节地址和 bank 宽度；若直接写 <code>addr % 32</code>，很容易把“元素索引”“字节地址”“32-bit word 索引”混为一谈。</p>
+<h3 id="2_1">答案 2<a class="headerlink" href="#2_1" title="Permanent link">&para;</a></h3>
+<p>因为这类算子往往受带宽与中间结果往返限制，更复杂的计算特性不一定是主瓶颈；减少流量、提升 locality 的 ROI 更高。</p>
+<h3 id="3_1">答案 3<a class="headerlink" href="#3_1" title="Permanent link">&para;</a></h3>
+<p>因为 AMD 常见执行粒度是 64-lane wavefront，同样的并行配置在资源占用、分歧代价和 tile 适配上常会显得更吃紧。</p>
+<h3 id="4_1">答案 4<a class="headerlink" href="#4_1" title="Permanent link">&para;</a></h3>
+<p>因为很多硬件特性需要特定编程模型、库、编译器或上下文支持。若不区分，读者会把“概念示意”误当“可直接复制的 API”。</p>
+<hr />
+<h2 id="10">10. 本章小结<a class="headerlink" href="#10" title="Permanent link">&para;</a></h2>
+<p>Tier 5 的核心不是背规格表，而是学会这三步：</p>
+<ol>
+<li><strong>识别该架构真正重要的能力差异</strong>；</li>
+<li><strong>把差异翻译成 tile、流水、矩阵路径和调参空间</strong>；</li>
+<li><strong>把“概念”“影响”“代码模板”三层分开写清楚。</strong></li>
+</ol>
+<h3 id="_3">进入下一章前，请确认你已经会<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h3>
+<ul>
+<li>用严格一点的口径解释 bank 与 bank conflict；</li>
+<li>说明 Ampere / Ada / Hopper / AMD CDNA 的优化关注点为什么不一样；</li>
+<li>明白“跨平台算法骨架”不等于“跨平台固定参数”；</li>
+<li>在写教程时区分结构说明、伪代码和可运行模板。</li>
+</ul>
+<p>下一章进入算子视角：把前面 1~5 层的方法，落到 GEMM、Flash-Attention、Softmax、RMSNorm、MoE、Cross-Entropy、RoPE 这些具体工作负载上。</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/zillaru" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "search.suggest", "search.highlight", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

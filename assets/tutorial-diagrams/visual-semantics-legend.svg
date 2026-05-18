@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="560" viewBox="0 0 1440 560">
+  <rect width="1440" height="560" fill="#f8fafc"/>
+  <text x="50" y="55" font-size="30" font-family="Arial, Helvetica, sans-serif" font-weight="700" fill="#0f172a">教程图解统一图例：颜色和箭头分别代表什么</text>
+  <text x="50" y="90" font-size="16" font-family="Arial, Helvetica, sans-serif" fill="#334155">从这一版开始，整套教程尽量使用同一套视觉语义，帮助你在离线阅读时一眼判断“这是输入、状态、过程还是结果”</text>
+
+  <rect x="60" y="145" width="250" height="125" rx="16" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+  <text x="85" y="185" font-size="22" font-family="Arial, Helvetica, sans-serif" font-weight="700" fill="#1d4ed8">蓝色卡片</text>
+  <text x="85" y="225" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">输入、起点、定位对象</text>
+
+  <rect x="340" y="145" width="250" height="125" rx="16" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+  <text x="365" y="185" font-size="22" font-family="Arial, Helvetica, sans-serif" font-weight="700" fill="#15803d">绿色卡片</text>
+  <text x="365" y="225" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">状态、判断、诊断结果</text>
+
+  <rect x="620" y="145" width="250" height="125" rx="16" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+  <text x="645" y="185" font-size="22" font-family="Arial, Helvetica, sans-serif" font-weight="700" fill="#92400e">橙色卡片</text>
+  <text x="645" y="225" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">变换、搬运、规约、调度动作</text>
+
+  <rect x="900" y="145" width="250" height="125" rx="16" fill="#fae8ff" stroke="#a21caf" stroke-width="2"/>
+  <text x="925" y="185" font-size="22" font-family="Arial, Helvetica, sans-serif" font-weight="700" fill="#86198f">紫色卡片</text>
+  <text x="925" y="225" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">核心计算、实现动作、校验点</text>
+
+  <rect x="1180" y="145" width="200" height="125" rx="16" fill="#fee2e2" stroke="#ef4444" stroke-width="2"/>
+  <text x="1205" y="185" font-size="22" font-family="Arial, Helvetica, sans-serif" font-weight="700" fill="#b91c1c">红色卡片</text>
+  <text x="1205" y="225" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">输出、风险、回收结果</text>
+
+  <rect x="60" y="330" width="1320" height="160" rx="16" fill="#ffffff" stroke="#94a3b8" stroke-width="2"/>
+  <text x="85" y="370" font-size="24" font-family="Arial, Helvetica, sans-serif" font-weight="700" fill="#0f172a">阅读约定</text>
+  <text x="85" y="410" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">1. 灰色箭头表示数据流、控制流或分析顺序。</text>
+  <text x="85" y="440" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">2. 白底大框表示总结区、解释区或“为什么这件事重要”。</text>
+  <text x="85" y="470" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">3. 如果某张图为了强调流程阶段而用了多色节点，请仍优先按“蓝→绿→橙→紫→红”的语义去理解它们在流程中的角色。</text>
+</svg>

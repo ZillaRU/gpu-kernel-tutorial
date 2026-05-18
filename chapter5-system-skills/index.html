@@ -1,0 +1,2952 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="深入理解 GPU 架构与 Kernel 优化技术">
+      
+      
+        <meta name="author" content="zilla">
+      
+      
+      
+        <link rel="prev" href="../chapter4-kernel-skills/">
+      
+      
+        <link rel="next" href="../%E6%9C%80%E5%B0%8F%E5%8F%AF%E8%BF%90%E8%A1%8C%E6%A8%A1%E6%9D%BF%E9%9B%86/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>第五章 系统工作流 - GPU Kernel 开发教程</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#_1" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="GPU Kernel 开发教程" class="md-header__button md-logo" aria-label="GPU Kernel 开发教程" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            GPU Kernel 开发教程
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              第五章 系统工作流
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/zillaru/gpu-kernel-tutorial" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    zillaru/gpu-kernel-tutorial
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  首页
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../chapter1-tier1-tier2/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  第一章 GPU执行模型
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../chapter2-tier3-tier4/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  第二章 计算优化
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../chapter3-tier5-arch/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  第三章 架构优化
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../chapter4-kernel-skills/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  第四章 算子技能
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
+        
+  
+  
+    
+  
+  第五章 系统工作流
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../%E6%9C%80%E5%B0%8F%E5%8F%AF%E8%BF%90%E8%A1%8C%E6%A8%A1%E6%9D%BF%E9%9B%86/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  模板集
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../%E6%9C%AF%E8%AF%AD%E8%A1%A8%E4%B8%8E%E9%80%9A%E7%94%A8%E5%9D%91%E6%B8%85%E5%8D%95/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  术语表
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../%E7%AB%A0%E8%8A%82%E4%BE%9D%E8%B5%96%E5%9B%BE%E4%B8%8E%E8%AF%BB%E8%80%85%E7%94%BB%E5%83%8F%E5%BB%BA%E8%AE%AE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  章节依赖
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="GPU Kernel 开发教程" class="md-nav__button md-logo" aria-label="GPU Kernel 开发教程" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    GPU Kernel 开发教程
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/zillaru/gpu-kernel-tutorial" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    zillaru/gpu-kernel-tutorial
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    首页
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../chapter1-tier1-tier2/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    第一章 GPU执行模型
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../chapter2-tier3-tier4/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    第二章 计算优化
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../chapter3-tier5-arch/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    第三章 架构优化
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../chapter4-kernel-skills/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    第四章 算子技能
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    第五章 系统工作流
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    第五章 系统工作流
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        本章技能卡
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-trick" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. 为什么系统技能比单个 trick 更重要
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-profiling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Profiling：先找真正的主瓶颈
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Profiling：先找真正的主瓶颈">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1 不要凭直觉优化
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-nvidia-nsight-compute-nsight-systems" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2 NVIDIA 常用工具：Nsight Compute / Nsight Systems
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2.2 NVIDIA 常用工具：Nsight Compute / Nsight Systems">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nsight-computencu" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Nsight Compute（NCU）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nsight-systemsnsys" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Nsight Systems（NSYS）
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#23-amd-rocprof-omniperf" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.3 AMD 常用工具：rocprof / Omniperf
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#24" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4 应该优先看哪些指标
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#25-roofline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.5 Roofline：一个足够好用的上层框架
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-diagnosis-profile" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Diagnosis：把 profile 结果翻译成优化优先级
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Diagnosis：把 profile 结果翻译成优化优先级">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.1 三类常见瓶颈
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3.1 三类常见瓶颈">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-memory-bound" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1) Memory-bound
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-compute-bound" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2) Compute-bound
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-latency-bound" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3) Latency-bound
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.2 一个简单够用的诊断流程
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.3 不要直接从指标跳到具体参数
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-verification-kernel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Verification：错误的 kernel 再快也没价值
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Verification：错误的 kernel 再快也没价值">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 建议采用的五阶段验证协议
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4.1 建议采用的五阶段验证协议">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#stage-1basic-correctness" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stage 1：Basic correctness
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stage-2dtype-sensitivity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stage 2：Dtype sensitivity
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stage-3edge-cases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stage 3：Edge cases
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stage-4determinism-reproducibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stage 4：Determinism / reproducibility
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stage-5stress-test" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stage 5：Stress test
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 容差不应教条化
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.3 一个统一验证模板
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-benchmark" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Benchmark：测得稳，比测得花更重要
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Benchmark：测得稳，比测得花更重要">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-benchmark" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 Benchmark 的最小规范
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-warmup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 为什么要 warmup
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-gpu" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.3 计时最好用 GPU 事件，而不是只看主机时间
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#54-compute-bound-memory-bound" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.4 Compute-bound 与 memory-bound 的指标不一样
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5.4 Compute-bound 与 memory-bound 的指标不一样">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#compute-bound-tflops" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Compute-bound 关心 TFLOPS
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#memory-bound-gbs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Memory-bound 关心 GB/s
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#55-benchmark" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.5 Benchmark 结果至少要记录这些字段
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-optimize-loop" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Optimize Loop：每轮只改一个主点
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. Optimize Loop：每轮只改一个主点">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#61" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.1 推荐的闭环
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#62" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.2 六条黄金规则
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6.2 六条黄金规则">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        规则 1：一次只改一个主变量
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-verify-benchmark" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        规则 2：先 verify，再 benchmark
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        规则 3：回退不是失败，是管理复杂度
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        规则 4：平台差异要单独记
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        规则 5：为每次迭代留日志
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        规则 6：连续几轮无明显收益后，要怀疑“方向错了”
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-softmax" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. 一个完整案例：如何优化一个慢 Softmax
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="7. 一个完整案例：如何优化一个慢 Softmax">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#0-baseline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        第 0 轮：建立 baseline
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1-profile" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        第 1 轮：Profile
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-diagnose" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        第 2 轮：Diagnose
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        第 3 轮：每次只改一个点
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        第 4 轮：记录保留/回退
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. 本章图解回顾
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. 本章自测
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="9. 本章自测">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        问题 1
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        问题 2
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        问题 3
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        问题 4
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. 本章答案
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="10. 本章答案">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        答案 1
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        答案 2
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        答案 3
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        答案 4
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. 本章小结
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="11. 本章小结">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        学完整套教程后，你应该能做到
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../%E6%9C%80%E5%B0%8F%E5%8F%AF%E8%BF%90%E8%A1%8C%E6%A8%A1%E6%9D%BF%E9%9B%86/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    模板集
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../%E6%9C%AF%E8%AF%AD%E8%A1%A8%E4%B8%8E%E9%80%9A%E7%94%A8%E5%9D%91%E6%B8%85%E5%8D%95/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    术语表
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../%E7%AB%A0%E8%8A%82%E4%BE%9D%E8%B5%96%E5%9B%BE%E4%B8%8E%E8%AF%BB%E8%80%85%E7%94%BB%E5%83%8F%E5%BB%BA%E8%AE%AE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    章节依赖
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        本章技能卡
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-trick" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. 为什么系统技能比单个 trick 更重要
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-profiling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Profiling：先找真正的主瓶颈
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Profiling：先找真正的主瓶颈">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1 不要凭直觉优化
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-nvidia-nsight-compute-nsight-systems" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2 NVIDIA 常用工具：Nsight Compute / Nsight Systems
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2.2 NVIDIA 常用工具：Nsight Compute / Nsight Systems">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nsight-computencu" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Nsight Compute（NCU）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nsight-systemsnsys" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Nsight Systems（NSYS）
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#23-amd-rocprof-omniperf" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.3 AMD 常用工具：rocprof / Omniperf
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#24" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4 应该优先看哪些指标
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#25-roofline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.5 Roofline：一个足够好用的上层框架
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-diagnosis-profile" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Diagnosis：把 profile 结果翻译成优化优先级
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Diagnosis：把 profile 结果翻译成优化优先级">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.1 三类常见瓶颈
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3.1 三类常见瓶颈">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-memory-bound" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1) Memory-bound
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-compute-bound" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2) Compute-bound
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-latency-bound" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3) Latency-bound
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.2 一个简单够用的诊断流程
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.3 不要直接从指标跳到具体参数
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-verification-kernel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Verification：错误的 kernel 再快也没价值
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Verification：错误的 kernel 再快也没价值">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 建议采用的五阶段验证协议
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4.1 建议采用的五阶段验证协议">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#stage-1basic-correctness" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stage 1：Basic correctness
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stage-2dtype-sensitivity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stage 2：Dtype sensitivity
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stage-3edge-cases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stage 3：Edge cases
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stage-4determinism-reproducibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stage 4：Determinism / reproducibility
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stage-5stress-test" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stage 5：Stress test
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 容差不应教条化
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.3 一个统一验证模板
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-benchmark" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Benchmark：测得稳，比测得花更重要
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Benchmark：测得稳，比测得花更重要">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-benchmark" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 Benchmark 的最小规范
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-warmup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 为什么要 warmup
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-gpu" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.3 计时最好用 GPU 事件，而不是只看主机时间
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#54-compute-bound-memory-bound" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.4 Compute-bound 与 memory-bound 的指标不一样
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5.4 Compute-bound 与 memory-bound 的指标不一样">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#compute-bound-tflops" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Compute-bound 关心 TFLOPS
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#memory-bound-gbs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Memory-bound 关心 GB/s
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#55-benchmark" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.5 Benchmark 结果至少要记录这些字段
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-optimize-loop" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Optimize Loop：每轮只改一个主点
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. Optimize Loop：每轮只改一个主点">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#61" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.1 推荐的闭环
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#62" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.2 六条黄金规则
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6.2 六条黄金规则">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        规则 1：一次只改一个主变量
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-verify-benchmark" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        规则 2：先 verify，再 benchmark
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        规则 3：回退不是失败，是管理复杂度
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        规则 4：平台差异要单独记
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        规则 5：为每次迭代留日志
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        规则 6：连续几轮无明显收益后，要怀疑“方向错了”
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-softmax" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. 一个完整案例：如何优化一个慢 Softmax
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="7. 一个完整案例：如何优化一个慢 Softmax">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#0-baseline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        第 0 轮：建立 baseline
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1-profile" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        第 1 轮：Profile
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-diagnose" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        第 2 轮：Diagnose
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        第 3 轮：每次只改一个点
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        第 4 轮：记录保留/回退
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. 本章图解回顾
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. 本章自测
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="9. 本章自测">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        问题 1
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        问题 2
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        问题 3
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        问题 4
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. 本章答案
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="10. 本章答案">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        答案 1
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        答案 2
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        答案 3
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        答案 4
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. 本章小结
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="11. 本章小结">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        学完整套教程后，你应该能做到
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="_1">第五章：系统技能——把优化变成可重复的工作流<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>学习目标：不再靠“感觉优化”，而是学会用 Profile → Diagnose → Optimize → Verify → Benchmark 的闭环稳定推进。</p>
+</blockquote>
+<h2 id="_2">本章技能卡<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>项目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>关注对象</td>
+<td>Profiling / Diagnosis / Verification / Benchmark / Optimize Loop</td>
+</tr>
+<tr>
+<td>核心问题</td>
+<td>如何把零散技巧变成一个能复用、能复盘的优化流程</td>
+</tr>
+<tr>
+<td>最适合阅读时机</td>
+<td>你已经能看懂前 4 章内容，准备真正做优化迭代</td>
+</tr>
+<tr>
+<td>读完应能回答</td>
+<td>为什么不能凭直觉改；为什么 verify 和 benchmark 不能颠倒</td>
+</tr>
+<tr>
+<td>最重要产出</td>
+<td>形成“一次只改一个主点”的工程化闭环习惯</td>
+</tr>
+</tbody>
+</table>
+<p>配套导航：如果你想先看整套教程如何串起来，再回到本章，请看 <a href="./学习路径-总目录.md">学习路径-总目录</a>。</p>
+<p>配套资料：
+- <a href="../%E6%9C%80%E5%B0%8F%E5%8F%AF%E8%BF%90%E8%A1%8C%E6%A8%A1%E6%9D%BF%E9%9B%86/#模板-5第五章最小-verify--benchmark-harness">最小可运行模板集：模板 5（Verify + Benchmark Harness）</a>
+- <a href="../%E6%9C%AF%E8%AF%AD%E8%A1%A8%E4%B8%8E%E9%80%9A%E7%94%A8%E5%9D%91%E6%B8%85%E5%8D%95/">术语表与通用坑清单</a></p>
+<hr />
+<h2 id="1-trick">1. 为什么系统技能比单个 trick 更重要<a class="headerlink" href="#1-trick" title="Permanent link">&para;</a></h2>
+<p>很多人学 kernel 优化时，会记住大量局部技巧：</p>
+<ul>
+<li><code>BLOCK_K</code> 怎么调；</li>
+<li>哪个算子适合 fusion；</li>
+<li>哪个平台喜欢什么 tile。</li>
+</ul>
+<p>但真正决定你能不能持续做对优化的，不是记住多少技巧，而是：</p>
+<blockquote>
+<p><strong>你有没有一套稳定的工作流，能把“猜测”变成“证据驱动的迭代”。</strong></p>
+</blockquote>
+<p>本章把这套工作流拆成五步：</p>
+<ol>
+<li>Profiling</li>
+<li>Diagnosis</li>
+<li>Verification</li>
+<li>Benchmark</li>
+<li>Optimize Loop</li>
+</ol>
+<p>先看一张总图：</p>
+<p><img alt="Kernel 优化闭环图" src="../assets/tutorial-diagrams/optimize-workflow-loop.svg" /></p>
+<p>这张图最重要的不是顺序本身，而是它强调了一件事：</p>
+<blockquote>
+<p><strong>这是一个会回退、会重来的闭环，不是从上到下打卡一次就结束的流水线。</strong></p>
+</blockquote>
+<p>比如：</p>
+<ul>
+<li>你 benchmark 后发现速度提升不稳定，可能要回到 profile；</li>
+<li>你 verify 后发现边界错了，必须回到 optimize 修实现；</li>
+<li>你 diagnose 后发现自己根本分错了瓶颈类型，就应该回退重看 profile。</li>
+</ul>
+<hr />
+<h2 id="2-profiling">2. Profiling：先找真正的主瓶颈<a class="headerlink" href="#2-profiling" title="Permanent link">&para;</a></h2>
+<h3 id="21">2.1 不要凭直觉优化<a class="headerlink" href="#21" title="Permanent link">&para;</a></h3>
+<p>最常见的错误流程是：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>看代码 -&gt; 觉得某段可能慢 -&gt; 直接改 -&gt; 再看快没快
+</code></pre></div>
+<p>问题在于：</p>
+<ul>
+<li>你盯的未必是真正瓶颈；</li>
+<li>某段“看起来复杂”的代码可能只占总时长 2%；</li>
+<li>一次改很多地方，最后也不知道是谁起作用。</li>
+</ul>
+<p>更好的流程必须先回答：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>时间花在哪个 kernel？
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>这个 kernel 是 compute、memory 还是 latency 在卡？
+</code></pre></div>
+<p>所以 profiling 的产出不是“一堆图表”，而是一个非常具体的问题定义：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>当前真正值得优化的是谁？
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>它到底慢在算力、带宽，还是并行结构不够？
+</code></pre></div>
+<h3 id="22-nvidia-nsight-compute-nsight-systems">2.2 NVIDIA 常用工具：Nsight Compute / Nsight Systems<a class="headerlink" href="#22-nvidia-nsight-compute-nsight-systems" title="Permanent link">&para;</a></h3>
+<h4 id="nsight-computencu">Nsight Compute（NCU）<a class="headerlink" href="#nsight-computencu" title="Permanent link">&para;</a></h4>
+<p>用途：</p>
+<ul>
+<li>看单个 kernel 的计数器；</li>
+<li>判断 DRAM、SM、L2、bank conflict、occupancy 等问题。</li>
+</ul>
+<h4 id="nsight-systemsnsys">Nsight Systems（NSYS）<a class="headerlink" href="#nsight-systemsnsys" title="Permanent link">&para;</a></h4>
+<p>用途：</p>
+<ul>
+<li>看系统级时间线；</li>
+<li>判断 launch overhead、CPU-GPU 空洞、多个 kernel 的相对占比。</li>
+</ul>
+<p>一个很实用的原则是：</p>
+<blockquote>
+<p>先用 NSYS 看“大头在哪”，再用 NCU 深挖“这个大头内部为什么慢”。</p>
+</blockquote>
+<h3 id="23-amd-rocprof-omniperf">2.3 AMD 常用工具：rocprof / Omniperf<a class="headerlink" href="#23-amd-rocprof-omniperf" title="Permanent link">&para;</a></h3>
+<p>对应地，在 ROCm 平台上你通常会看：</p>
+<ul>
+<li><code>rocprof</code>：拿硬件计数器；</li>
+<li>Omniperf：更系统地做指标分析。</li>
+</ul>
+<p>虽然工具名不同，但底层问题仍然是同样三个：</p>
+<ol>
+<li>计算单元忙不忙；</li>
+<li>内存带宽吃没吃满；</li>
+<li>有没有资源/调度/冲突导致低效。</li>
+</ol>
+<h3 id="24">2.4 应该优先看哪些指标<a class="headerlink" href="#24" title="Permanent link">&para;</a></h3>
+<p>不需要一上来盯上百个指标。先看这些就够建立第一层判断：</p>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>你关心什么</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>计算利用率</td>
+<td>SM/CU 是否忙</td>
+</tr>
+<tr>
+<td>内存利用率</td>
+<td>DRAM/HBM 是否接近饱和</td>
+</tr>
+<tr>
+<td>活跃度</td>
+<td>occupancy / active warps / active waves</td>
+</tr>
+<tr>
+<td>缓存/共享存储</td>
+<td>L2 命中情况、bank conflict 风险</td>
+</tr>
+<tr>
+<td>系统层面</td>
+<td>kernel 数量、单次时长、launch 空洞</td>
+</tr>
+</tbody>
+</table>
+<p>关键不是记住每个指标名，而是学会把它们翻译成一句话：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>算力没吃满，还是带宽没吃满？
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>是算得慢，还是根本没有足够工作并行起来？
+</code></pre></div>
+<h3 id="25-roofline">2.5 Roofline：一个足够好用的上层框架<a class="headerlink" href="#25-roofline" title="Permanent link">&para;</a></h3>
+<p>你可以把 roofline 当成一个很粗但很有用的判断器：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>Arithmetic Intensity = FLOPs / Bytes
+</code></pre></div>
+<p>如果算子 intensity 很低，它通常更接近 memory-bound；
+如果很高，它更可能是 compute-bound。</p>
+<p>注意这里是“更可能”，不是绝对判决。因为现实里还可能夹杂：</p>
+<ul>
+<li>launch overhead；</li>
+<li>bank conflict；</li>
+<li>occupancy 限制；</li>
+<li>不规则 shape 导致的低效。</li>
+</ul>
+<p>所以 roofline 最适合做 <strong>第一层归类</strong>，不是最终结论。</p>
+<hr />
+<h2 id="3-diagnosis-profile">3. Diagnosis：把 profile 结果翻译成优化优先级<a class="headerlink" href="#3-diagnosis-profile" title="Permanent link">&para;</a></h2>
+<h3 id="31">3.1 三类常见瓶颈<a class="headerlink" href="#31" title="Permanent link">&para;</a></h3>
+<h4 id="1-memory-bound">1) Memory-bound<a class="headerlink" href="#1-memory-bound" title="Permanent link">&para;</a></h4>
+<p>常见表现：</p>
+<ul>
+<li>DRAM/HBM 利用率高；</li>
+<li>计算利用率不高；</li>
+<li>算子 arithmetic intensity 低；</li>
+<li>很多时间花在 load/store 路径。</li>
+</ul>
+<p>优先策略通常是：</p>
+<ol>
+<li>fusion；</li>
+<li>向量化加载；</li>
+<li>locality / L2 grouping；</li>
+<li>改善 reduce 和边界处理；</li>
+<li>必要时量化权重/激活。</li>
+</ol>
+<h4 id="2-compute-bound">2) Compute-bound<a class="headerlink" href="#2-compute-bound" title="Permanent link">&para;</a></h4>
+<p>常见表现：</p>
+<ul>
+<li>计算利用率高；</li>
+<li>DRAM 没有完全吃满；</li>
+<li>Tensor Core / MFMA 路径是核心关注点；</li>
+<li>内层循环质量很重要。</li>
+</ul>
+<p>优先策略通常是：</p>
+<ol>
+<li>正确 tile 形状；</li>
+<li>Tensor Core / MFMA 友好布局；</li>
+<li>inner-loop hygiene；</li>
+<li>合适的 <code>num_warps/num_stages</code>；</li>
+<li>必要时再考虑 fast math。</li>
+</ol>
+<h4 id="3-latency-bound">3) Latency-bound<a class="headerlink" href="#3-latency-bound" title="Permanent link">&para;</a></h4>
+<p>常见表现：</p>
+<ul>
+<li>计算与带宽利用率都不高；</li>
+<li>kernel 很短、很多；</li>
+<li>launch overhead 明显；</li>
+<li>或者 grid 太小，GPU 根本铺不满。</li>
+</ul>
+<p>优先策略通常是：</p>
+<ol>
+<li>减少 kernel 数量；</li>
+<li>persistent kernel；</li>
+<li>Split-K / Stream-K；</li>
+<li>调整并行粒度。</li>
+</ol>
+<h3 id="32">3.2 一个简单够用的诊断流程<a class="headerlink" href="#32" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>先看系统时间线：大头 kernel 是谁？
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>    ↓
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>看该 kernel：DRAM 高不高？SM/CU 高不高？
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    ↓
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>若 DRAM 高、算力低 -&gt; Memory-bound
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>若算力高、DRAM 一般 -&gt; Compute-bound
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>若两边都不高 -&gt; Latency-bound / 负载不足 / 调度问题
+</code></pre></div>
+<p>这套流程故意不追求精细，因为教学里最需要的是 <strong>先把主矛盾抓准</strong>。</p>
+<h3 id="33">3.3 不要直接从指标跳到具体参数<a class="headerlink" href="#33" title="Permanent link">&para;</a></h3>
+<p>例如：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>occupancy 低 -&gt; 把 num_warps 调大
+</code></pre></div>
+<p>这不是稳健诊断。</p>
+<p>更稳健的思路是：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>occupancy 为什么低？
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>  - grid 本来就小？
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>  - 寄存器压力太高？
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>  - SMEM 太大？
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>  - block 形状不合理？
+</code></pre></div>
+<p>指标只是信号，根因才决定优化动作。</p>
+<hr />
+<h2 id="4-verification-kernel">4. Verification：错误的 kernel 再快也没价值<a class="headerlink" href="#4-verification-kernel" title="Permanent link">&para;</a></h2>
+<h3 id="41">4.1 建议采用的五阶段验证协议<a class="headerlink" href="#41" title="Permanent link">&para;</a></h3>
+<p>这一节和整章总图要一起看。闭环里最常见的工程错误不是“完全不做 verify”，而是：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>先 benchmark，看到更快了很兴奋，最后才发现结果早就不对。
+</code></pre></div>
+<p>正确的次序应该是：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>先确认正确性边界，再去做稳定 benchmark。
+</code></pre></div>
+<h4 id="stage-1basic-correctness">Stage 1：Basic correctness<a class="headerlink" href="#stage-1basic-correctness" title="Permanent link">&para;</a></h4>
+<p>先和可靠参考实现对齐：</p>
+<ul>
+<li>PyTorch reference；</li>
+<li>或者 vendor library；</li>
+<li>或者你确认正确的慢实现。</li>
+</ul>
+<h4 id="stage-2dtype-sensitivity">Stage 2：Dtype sensitivity<a class="headerlink" href="#stage-2dtype-sensitivity" title="Permanent link">&para;</a></h4>
+<p>同一 kernel 在：</p>
+<ul>
+<li>FP16</li>
+<li>BF16</li>
+<li>FP32</li>
+</ul>
+<p>下的误差行为可能完全不同。很多 bug 只在某个 dtype 才暴露。</p>
+<h4 id="stage-3edge-cases">Stage 3：Edge cases<a class="headerlink" href="#stage-3edge-cases" title="Permanent link">&para;</a></h4>
+<p>要主动测：</p>
+<ul>
+<li>非整除维度；</li>
+<li>极小尺寸（如 <code>M=1</code>）；</li>
+<li>很大尺寸；</li>
+<li>特殊值（全 0、大值、负值、inf/nan 视场景而定）。</li>
+</ul>
+<h4 id="stage-4determinism-reproducibility">Stage 4：Determinism / reproducibility<a class="headerlink" href="#stage-4determinism-reproducibility" title="Permanent link">&para;</a></h4>
+<p>这里一定要讲得克制：</p>
+<blockquote>
+<p>不是所有 GPU kernel 都需要 bitwise identical。</p>
+</blockquote>
+<p>更合理的表达是：</p>
+<ul>
+<li>如果这个 kernel 设计上应该 deterministic，那就检查重复运行结果是否一致；</li>
+<li>如果算法本身允许非确定性（例如某些 atomic / reduction 路径），则应该检查 <strong>统计稳定性或误差范围</strong>，而不是强行 <code>torch.equal</code>。</li>
+</ul>
+<h4 id="stage-5stress-test">Stage 5：Stress test<a class="headerlink" href="#stage-5stress-test" title="Permanent link">&para;</a></h4>
+<p>长时间、大尺寸、多次调用，看是否有：</p>
+<ul>
+<li>罕见 race；</li>
+<li>数值漂移；</li>
+<li>内存问题；</li>
+<li>在特定 shape 才爆的 bug。</li>
+</ul>
+<h3 id="42">4.2 容差不应教条化<a class="headerlink" href="#42" title="Permanent link">&para;</a></h3>
+<p>常见经验值可以作为起点，但不要把它写成铁律：</p>
+<table>
+<thead>
+<tr>
+<th>dtype</th>
+<th>常见起始容差</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>FP32</td>
+<td><code>1e-5</code> 量级</td>
+</tr>
+<tr>
+<td>FP16</td>
+<td><code>1e-2</code> 量级</td>
+</tr>
+<tr>
+<td>BF16</td>
+<td><code>1e-1</code> 量级</td>
+</tr>
+</tbody>
+</table>
+<p>为什么要说“起始容差”？因为误差和下面因素都有关：</p>
+<ul>
+<li>算子类型；</li>
+<li>reduce 长度；</li>
+<li>是否用了 fast math；</li>
+<li>是否改了规约顺序；</li>
+<li>是否存在 chunked/online 近似结构。</li>
+</ul>
+<p>所以更正确的验证语言应该是：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>先用合理起点容差验证；
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>若通过，再尝试收紧；
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>若失败，分析是实现 bug 还是算法误差边界。
+</code></pre></div>
+<h3 id="43">4.3 一个统一验证模板<a class="headerlink" href="#43" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">verify_kernel</span><span class="p">(</span><span class="n">kernel_fn</span><span class="p">,</span> <span class="n">ref_fn</span><span class="p">,</span> <span class="n">cases</span><span class="p">,</span> <span class="n">atol</span><span class="p">,</span> <span class="n">rtol</span><span class="p">):</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>    <span class="k">for</span> <span class="n">case</span> <span class="ow">in</span> <span class="n">cases</span><span class="p">:</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>        <span class="n">out</span> <span class="o">=</span> <span class="n">kernel_fn</span><span class="p">(</span><span class="o">*</span><span class="n">case</span><span class="p">)</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>        <span class="n">ref</span> <span class="o">=</span> <span class="n">ref_fn</span><span class="p">(</span><span class="o">*</span><span class="n">case</span><span class="p">)</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>        <span class="k">assert</span> <span class="n">torch</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">out</span><span class="o">.</span><span class="n">float</span><span class="p">(),</span> <span class="n">ref</span><span class="o">.</span><span class="n">float</span><span class="p">(),</span> <span class="n">atol</span><span class="o">=</span><span class="n">atol</span><span class="p">,</span> <span class="n">rtol</span><span class="o">=</span><span class="n">rtol</span><span class="p">)</span>
+</code></pre></div>
+<p>真正需要补的不是模板本身，而是测试集设计：</p>
+<ul>
+<li>标准 shape；</li>
+<li>边界 shape；</li>
+<li>多 dtype；</li>
+<li>重复执行。</li>
+</ul>
+<hr />
+<h2 id="5-benchmark">5. Benchmark：测得稳，比测得花更重要<a class="headerlink" href="#5-benchmark" title="Permanent link">&para;</a></h2>
+<h3 id="51-benchmark">5.1 Benchmark 的最小规范<a class="headerlink" href="#51-benchmark" title="Permanent link">&para;</a></h3>
+<p>一个靠谱的 benchmark 至少要包含：</p>
+<ol>
+<li>warmup；</li>
+<li>真正同步的计时；</li>
+<li>多次迭代；</li>
+<li>报告中位数或稳定统计量；</li>
+<li>明确 shape、dtype、设备。</li>
+</ol>
+<h3 id="52-warmup">5.2 为什么要 warmup<a class="headerlink" href="#52-warmup" title="Permanent link">&para;</a></h3>
+<p>warmup 不是形式主义，它在 GPU kernel 里很重要，因为前几次运行经常混着：</p>
+<ul>
+<li>JIT 编译；</li>
+<li>autotune 搜索；</li>
+<li>频率爬升；</li>
+<li>cache 预热。</li>
+</ul>
+<p>把这些时间混进 benchmark 会严重污染结果。</p>
+<h3 id="53-gpu">5.3 计时最好用 GPU 事件，而不是只看主机时间<a class="headerlink" href="#53-gpu" title="Permanent link">&para;</a></h3>
+<p>在 CUDA/ROCm 语义下，更稳妥的做法通常是用设备事件计时，而不是裸 <code>time.perf_counter()</code>。</p>
+<p>原因是：</p>
+<ul>
+<li>GPU 调用很多是异步的；</li>
+<li>主机计时若不同步，容易量错；</li>
+<li>事件计时更贴近设备执行时间。</li>
+</ul>
+<h3 id="54-compute-bound-memory-bound">5.4 Compute-bound 与 memory-bound 的指标不一样<a class="headerlink" href="#54-compute-bound-memory-bound" title="Permanent link">&para;</a></h3>
+<h4 id="compute-bound-tflops">Compute-bound 关心 TFLOPS<a class="headerlink" href="#compute-bound-tflops" title="Permanent link">&para;</a></h4>
+<p>例如 GEMM：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>TFLOPS = FLOPs / time
+</code></pre></div>
+<h4 id="memory-bound-gbs">Memory-bound 关心 GB/s<a class="headerlink" href="#memory-bound-gbs" title="Permanent link">&para;</a></h4>
+<p>例如 Softmax / RMSNorm：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>GB/s = bytes_moved / time
+</code></pre></div>
+<p>别把两种指标混着看。一个 Softmax 不该用 TFLOPS 当主 KPI，一个 GEMM 也不该只盯 GB/s。</p>
+<h3 id="55-benchmark">5.5 Benchmark 结果至少要记录这些字段<a class="headerlink" href="#55-benchmark" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>算子名</td>
+<td>GEMM / Softmax / RMSNorm ...</td>
+</tr>
+<tr>
+<td>shape</td>
+<td>输入维度</td>
+</tr>
+<tr>
+<td>dtype</td>
+<td>FP16 / BF16 / FP32</td>
+</tr>
+<tr>
+<td>device</td>
+<td>4090 / H100 / MI300X ...</td>
+</tr>
+<tr>
+<td>latency</td>
+<td>中位数或稳定统计</td>
+</tr>
+<tr>
+<td>throughput</td>
+<td>TFLOPS 或 GB/s</td>
+</tr>
+<tr>
+<td>baseline</td>
+<td>vs PyTorch / cuBLAS / CK / 自家旧版本</td>
+</tr>
+</tbody>
+</table>
+<p>这样结果才可复现、可比较、可复盘。</p>
+<hr />
+<h2 id="6-optimize-loop">6. Optimize Loop：每轮只改一个主点<a class="headerlink" href="#6-optimize-loop" title="Permanent link">&para;</a></h2>
+<h3 id="61">6.1 推荐的闭环<a class="headerlink" href="#61" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>Baseline
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a> -&gt; Profile
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a> -&gt; Diagnose
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a> -&gt; Apply one change
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a> -&gt; Verify
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a> -&gt; Benchmark
+<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a> -&gt; Keep or revert
+<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a> -&gt; Next iteration
+</code></pre></div>
+<p>最重要的不是这个图，而是下面几条 guardrail。</p>
+<h3 id="62">6.2 六条黄金规则<a class="headerlink" href="#62" title="Permanent link">&para;</a></h3>
+<h4 id="1">规则 1：一次只改一个主变量<a class="headerlink" href="#1" title="Permanent link">&para;</a></h4>
+<p>不要一轮里同时改：</p>
+<ul>
+<li><code>BLOCK_K</code></li>
+<li><code>num_warps</code></li>
+<li><code>num_stages</code></li>
+<li>还顺手把布局也改了</li>
+</ul>
+<p>否则即使性能变了，你也不知道是哪一项起作用。</p>
+<h4 id="2-verify-benchmark">规则 2：先 verify，再 benchmark<a class="headerlink" href="#2-verify-benchmark" title="Permanent link">&para;</a></h4>
+<p>错的更快没有意义。</p>
+<h4 id="3">规则 3：回退不是失败，是管理复杂度<a class="headerlink" href="#3" title="Permanent link">&para;</a></h4>
+<p>如果某次修改回退了，应该明确记录：</p>
+<ul>
+<li>为什么试；</li>
+<li>为什么退；</li>
+<li>下一步准备怎么试。</li>
+</ul>
+<h4 id="4">规则 4：平台差异要单独记<a class="headerlink" href="#4" title="Permanent link">&para;</a></h4>
+<p>一个改动在 4090 上提速，不代表在 MI300X 或 H100 上也提速。不要混写成统一结论。</p>
+<h4 id="5">规则 5：为每次迭代留日志<a class="headerlink" href="#5" title="Permanent link">&para;</a></h4>
+<p>最简单也最有用的日志字段：</p>
+<ul>
+<li>改了什么；</li>
+<li>正确性是否通过；</li>
+<li>性能变化多少；</li>
+<li>保留还是回退。</li>
+</ul>
+<h4 id="6">规则 6：连续几轮无明显收益后，要怀疑“方向错了”<a class="headerlink" href="#6" title="Permanent link">&para;</a></h4>
+<p>如果你已经做了多轮小调参仍没显著提升，问题可能不在参数，而在：</p>
+<ul>
+<li>算法组织方式；</li>
+<li>kernel 粒度；</li>
+<li>甚至上游/下游调用模式。</li>
+</ul>
+<p>这时候比继续抠参数更重要的是重新诊断。</p>
+<hr />
+<h2 id="7-softmax">7. 一个完整案例：如何优化一个慢 Softmax<a class="headerlink" href="#7-softmax" title="Permanent link">&para;</a></h2>
+<p>假设现状：</p>
+<ul>
+<li>4090 上一版 Softmax 只有预期带宽的一半；</li>
+<li>PyTorch eager 版本更慢，但你自己的 Triton 版本也不够好。</li>
+</ul>
+<h3 id="0-baseline">第 0 轮：建立 baseline<a class="headerlink" href="#0-baseline" title="Permanent link">&para;</a></h3>
+<p>记录：</p>
+<ul>
+<li>shape；</li>
+<li>dtype；</li>
+<li>latency；</li>
+<li>GB/s；</li>
+<li>和 PyTorch baseline 对比。</li>
+</ul>
+<h3 id="1-profile">第 1 轮：Profile<a class="headerlink" href="#1-profile" title="Permanent link">&para;</a></h3>
+<p>看出：</p>
+<ul>
+<li>DRAM 利用率偏高；</li>
+<li>计算利用率不高；</li>
+<li>说明是 memory-bound；</li>
+<li>同时检查是否有边界导致的低效访问。</li>
+</ul>
+<h3 id="2-diagnose">第 2 轮：Diagnose<a class="headerlink" href="#2-diagnose" title="Permanent link">&para;</a></h3>
+<p>决定优先尝试：</p>
+<ol>
+<li>向量化加载；</li>
+<li>合理 <code>BLOCK_SIZE</code>；</li>
+<li>multi-row 处理。</li>
+</ol>
+<h3 id="3_1">第 3 轮：每次只改一个点<a class="headerlink" href="#3_1" title="Permanent link">&para;</a></h3>
+<p>例如先只改 <code>BLOCK_SIZE</code>，验证和 benchmark；
+再只加向量化加载；
+再只尝试 multi-row。</p>
+<h3 id="4_1">第 4 轮：记录保留/回退<a class="headerlink" href="#4_1" title="Permanent link">&para;</a></h3>
+<p>如果 multi-row=8 导致寄存器压力过大，回退；
+如果 multi-row=4 提升明显，就保留。</p>
+<p>这就是一个完整、可复盘的优化循环。</p>
+<hr />
+<h2 id="8">8. 本章图解回顾<a class="headerlink" href="#8" title="Permanent link">&para;</a></h2>
+<p>第五章最值得反复回看的核心图，其实就是开头那张闭环图：<a href="./#1-为什么系统技能比单个-trick-更重要">Kernel 优化闭环图</a></p>
+<p>读完这一章后，你最好已经能把这张图翻译成下面这组工程动作：</p>
+<ol>
+<li><strong>Profile</strong>：先找到真正值得优化的大头；</li>
+<li><strong>Diagnose</strong>：把指标翻译成 compute / memory / latency 类型；</li>
+<li><strong>Optimize</strong>：每轮只改一个主变量；</li>
+<li><strong>Verify</strong>：先过正确性和边界；</li>
+<li><strong>Benchmark</strong>：最后再用统一协议测性能；</li>
+<li><strong>Loop back</strong>：任何一步发现假设错了，都可以回退重做。</li>
+</ol>
+<p>如果你想离线快速复习整套教程的图谱，而不是只看这一章，也可以直接翻：</p>
+<ul>
+<li><a href="./学习路径-总目录.md#图解索引适合复习或断网速查">图解索引</a></li>
+<li><a href="../%E6%9C%80%E5%B0%8F%E5%8F%AF%E8%BF%90%E8%A1%8C%E6%A8%A1%E6%9D%BF%E9%9B%86/#图解速查附录离线版">图解速查附录</a></li>
+</ul>
+<hr />
+<h2 id="9">9. 本章自测<a class="headerlink" href="#9" title="Permanent link">&para;</a></h2>
+<h3 id="1_1">问题 1<a class="headerlink" href="#1_1" title="Permanent link">&para;</a></h3>
+<p>为什么说 NSYS 和 NCU（或 ROCm 对应工具）经常要配合使用，而不是只用一个？</p>
+<h3 id="2">问题 2<a class="headerlink" href="#2" title="Permanent link">&para;</a></h3>
+<p>为什么 <code>occupancy 低</code> 不能直接推出“把 <code>num_warps</code> 调大”？</p>
+<h3 id="3_2">问题 3<a class="headerlink" href="#3_2" title="Permanent link">&para;</a></h3>
+<p>为什么验证里不应该把“重复运行 bitwise identical”当成所有 kernel 的默认标准？</p>
+<h3 id="4_2">问题 4<a class="headerlink" href="#4_2" title="Permanent link">&para;</a></h3>
+<p>一个 memory-bound 算子的主 KPI 应该更接近 TFLOPS 还是 GB/s？为什么？</p>
+<hr />
+<h2 id="10">10. 本章答案<a class="headerlink" href="#10" title="Permanent link">&para;</a></h2>
+<h3 id="1_2">答案 1<a class="headerlink" href="#1_2" title="Permanent link">&para;</a></h3>
+<p>因为 NSYS 更擅长看系统级时间线和大头位置，NCU/rocprof 更擅长深挖单个 kernel 内部的硬件计数器。两者解决的问题层级不同。</p>
+<h3 id="2_1">答案 2<a class="headerlink" href="#2_1" title="Permanent link">&para;</a></h3>
+<p>因为 occupancy 低可能来自很多原因：grid 小、寄存器太重、SMEM 太大、block 形状不合理。根因不一样，优化动作也不一样。</p>
+<h3 id="3_3">答案 3<a class="headerlink" href="#3_3" title="Permanent link">&para;</a></h3>
+<p>因为有些 GPU kernel 天然允许非确定性（如部分 reduction/atomic 路径）。这时更合理的是检查误差范围或统计稳定性，而不是强行要求 bitwise 完全一致。</p>
+<h3 id="4_3">答案 4<a class="headerlink" href="#4_3" title="Permanent link">&para;</a></h3>
+<p>更接近 GB/s，因为它的主限制来自数据搬运而不是算术吞吐。</p>
+<hr />
+<h2 id="11">11. 本章小结<a class="headerlink" href="#11" title="Permanent link">&para;</a></h2>
+<p>系统技能真正要你养成的是一种工作方式：</p>
+<ol>
+<li><strong>先定位瓶颈，再谈优化动作；</strong></li>
+<li><strong>先保证正确，再谈速度；</strong></li>
+<li><strong>每轮只改一个主变量，并留下日志；</strong></li>
+<li><strong>把平台差异、算子类型和验证标准一起纳入闭环。</strong></li>
+</ol>
+<h3 id="_3">学完整套教程后，你应该能做到<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h3>
+<ul>
+<li>拿到一个 kernel 先做 profile，而不是先改代码；</li>
+<li>根据指标判断该优先动 Tier 1/2/3/4/5 中的哪一层；</li>
+<li>为每次优化保留可验证、可 benchmark、可回滚的记录；</li>
+<li>对“快但不稳”与“稳但慢”的取舍给出有依据的判断。</li>
+</ul>
+<p>到这里，这套教程的主线才算闭合：</p>
+<ul>
+<li>第一章：执行模型 + 分块 + 内存层级；</li>
+<li>第二章：计算优化 + 融合 + 高级调度；</li>
+<li>第三章：架构特定能力；</li>
+<li>第四章：具体算子分析；</li>
+<li>第五章：把所有知识串成可执行优化流程。</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/zillaru" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "search.suggest", "search.highlight", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

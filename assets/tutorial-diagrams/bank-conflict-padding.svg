@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="820" viewBox="0 0 1440 820">
+  <rect width="1440" height="820" fill="#f8fafc"/>
+  <text x="50" y="55" font-size="30" font-family="Arial, Helvetica, sans-serif" font-weight="700" fill="#0f172a">bank conflict 图解：为什么转置常常需要 +1 padding</text>
+  <text x="50" y="90" font-size="16" font-family="Arial, Helvetica, sans-serif" fill="#334155">第三章最重要的共性提醒之一：bank conflict 不是某平台独有问题，而是片上共享存储并发访问的通用风险</text>
+
+  <rect x="60" y="145" width="420" height="250" rx="16" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+  <text x="85" y="185" font-size="22" font-family="Arial, Helvetica, sans-serif" font-weight="700" fill="#1d4ed8">按行访问：通常更自然</text>
+  <text x="85" y="225" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">连续 lane 访问相邻元素</text>
+  <text x="85" y="255" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">→ 更容易打到不同 bank</text>
+  <text x="85" y="305" font-size="22" font-family="monospace" fill="#0f172a">tile[0][0] tile[0][1] tile[0][2] ...</text>
+
+  <rect x="520" y="145" width="420" height="250" rx="16" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+  <text x="545" y="185" font-size="22" font-family="Arial, Helvetica, sans-serif" font-weight="700" fill="#92400e">按列访问：经典风险区</text>
+  <text x="545" y="225" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">连续 lane 可能反复访问同一列步长模式</text>
+  <text x="545" y="255" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">→ 更容易反复撞到同一 bank</text>
+  <text x="545" y="305" font-size="22" font-family="monospace" fill="#0f172a">tile[0][0] tile[1][0] tile[2][0] ...</text>
+
+  <rect x="980" y="145" width="360" height="250" rx="16" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+  <text x="1005" y="185" font-size="22" font-family="Arial, Helvetica, sans-serif" font-weight="700" fill="#15803d">padding 修复思路</text>
+  <text x="1005" y="225" font-size="18" font-family="monospace" fill="#0f172a">float tile[32][33]</text>
+  <text x="1005" y="260" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">多出来的一列不是浪费，</text>
+  <text x="1005" y="290" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">而是在改变地址到 bank 的映射。</text>
+  <text x="1005" y="330" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">目的：减少列访问时的冲突概率。</text>
+
+  <rect x="60" y="460" width="1280" height="165" rx="16" fill="#ffffff" stroke="#94a3b8" stroke-width="2"/>
+  <text x="85" y="500" font-size="24" font-family="Arial, Helvetica, sans-serif" font-weight="700" fill="#0f172a">更严谨的口径</text>
+  <text x="85" y="540" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">bank 映射最好理解成：bank_id ≈ (byte_addr / bank_width) % num_banks</text>
+  <text x="85" y="570" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">这比直接背“addr % 32”更不容易把元素索引、字节地址和 32-bit word 索引混在一起。</text>
+
+  <rect x="60" y="675" width="410" height="105" rx="16" fill="#eff6ff" stroke="#3b82f6" stroke-width="2"/>
+  <text x="85" y="715" font-size="22" font-family="Arial, Helvetica, sans-serif" font-weight="700" fill="#1d4ed8">第一原则</text>
+  <text x="85" y="750" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">先用心智模型预测风险，再用 profiler 验证。</text>
+
+  <rect x="515" y="675" width="410" height="105" rx="16" fill="#fae8ff" stroke="#a21caf" stroke-width="2"/>
+  <text x="540" y="715" font-size="22" font-family="Arial, Helvetica, sans-serif" font-weight="700" fill="#86198f">第二原则</text>
+  <text x="540" y="750" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">padding / swizzle / 改访问顺序，本质都在改映射关系。</text>
+
+  <rect x="970" y="675" width="370" height="105" rx="16" fill="#fee2e2" stroke="#ef4444" stroke-width="2"/>
+  <text x="995" y="715" font-size="22" font-family="Arial, Helvetica, sans-serif" font-weight="700" fill="#b91c1c">最常见误区</text>
+  <text x="995" y="750" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">把广播、普通冲突和最坏冲突全混成一种情况。</text>
+</svg>
