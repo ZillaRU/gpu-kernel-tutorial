@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="840" viewBox="0 0 1440 840">
+  <rect width="1440" height="840" fill="#f8fafc"/>
+  <text x="50" y="55" font-size="30" font-family="Arial, Helvetica, sans-serif" font-weight="700" fill="#0f172a">Tier 3 / Tier 4 决策图：该继续 fusion，还是该重构调度？</text>
+  <text x="50" y="90" font-size="16" font-family="Arial, Helvetica, sans-serif" fill="#334155">第二章最想训练的是“先判断问题类型，再选择优化动作”，而不是一上来就套 Split-K 或盲目全 fuse</text>
+
+  <rect x="60" y="150" width="290" height="140" rx="16" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+  <text x="85" y="190" font-size="22" font-family="Arial, Helvetica, sans-serif" font-weight="700" fill="#1d4ed8">起点：当前 kernel 已经基本正确</text>
+  <text x="85" y="230" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">地址、mask、dtype、边界都没问题</text>
+
+  <rect x="410" y="150" width="280" height="140" rx="16" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+  <text x="435" y="190" font-size="22" font-family="Arial, Helvetica, sans-serif" font-weight="700" fill="#15803d">先做判断</text>
+  <text x="435" y="230" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">主瓶颈更像 memory / compute / latency？</text>
+
+  <rect x="770" y="135" width="280" height="170" rx="16" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+  <text x="795" y="175" font-size="22" font-family="Arial, Helvetica, sans-serif" font-weight="700" fill="#92400e">Tier 3 更常见入口</text>
+  <text x="795" y="215" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">中间结果 HBM 往返很多</text>
+  <text x="795" y="245" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">或者内层循环里有明显冗余</text>
+  <text x="795" y="280" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">→ 先看 fusion / inner-loop hygiene / 精度路径</text>
+
+  <rect x="1090" y="135" width="290" height="170" rx="16" fill="#fae8ff" stroke="#a21caf" stroke-width="2"/>
+  <text x="1115" y="175" font-size="22" font-family="Arial, Helvetica, sans-serif" font-weight="700" fill="#86198f">Tier 4 更常见入口</text>
+  <text x="1115" y="215" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">grid 太小 / launch 太碎 / 尾波严重</text>
+  <text x="1115" y="245" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">→ 先看 Split-K / Persistent / Stream-K</text>
+
+  <path d="M350 220 L410 220" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#arrow)"/>
+  <path d="M690 220 L770 220" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#arrow)"/>
+  <path d="M690 245 C840 330, 1040 330, 1090 245" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#arrow)"/>
+
+  <rect x="80" y="390" width="370" height="180" rx="16" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+  <text x="105" y="430" font-size="22" font-family="Arial, Helvetica, sans-serif" font-weight="700" fill="#92400e">Tier 3 的典型动作</text>
+  <text x="105" y="470" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">- 融合 elementwise / reduce / normalize</text>
+  <text x="105" y="500" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">- 清理 inner loop 里的多余转换或分支</text>
+  <text x="105" y="530" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">- 先建立标准正确版本，再评估 fast math</text>
+
+  <rect x="530" y="390" width="370" height="180" rx="16" fill="#fae8ff" stroke="#a21caf" stroke-width="2"/>
+  <text x="555" y="430" font-size="22" font-family="Arial, Helvetica, sans-serif" font-weight="700" fill="#86198f">Tier 4 的典型动作</text>
+  <text x="555" y="470" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">- Split-K：扩并行度，代价是 partial sum 规约</text>
+  <text x="555" y="500" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">- Persistent：减少 launch 碎片化</text>
+  <text x="555" y="530" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">- Stream-K：改善尾波和末段负载均衡</text>
+
+  <rect x="980" y="390" width="380" height="180" rx="16" fill="#fee2e2" stroke="#ef4444" stroke-width="2"/>
+  <text x="1005" y="430" font-size="22" font-family="Arial, Helvetica, sans-serif" font-weight="700" fill="#b91c1c">最常见误判</text>
+  <text x="1005" y="470" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">- memory-bound 却先抠几条 ALU 指令</text>
+  <text x="1005" y="500" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">- grid 很小却完全不看调度结构</text>
+  <text x="1005" y="530" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">- 没有 profile 就直接上复杂调度</text>
+
+  <rect x="80" y="635" width="1280" height="130" rx="16" fill="#ffffff" stroke="#94a3b8" stroke-width="2"/>
+  <text x="105" y="675" font-size="24" font-family="Arial, Helvetica, sans-serif" font-weight="700" fill="#0f172a">一句话工作流</text>
+  <text x="105" y="715" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">先判断主矛盾是在“中间结果与内层冗余”，还是在“并行结构没把硬件吃满”；前者优先 Tier 3，后者优先 Tier 4。</text>
+
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L10,3 L0,6 z" fill="#64748b"/>
+    </marker>
+  </defs>
+</svg>

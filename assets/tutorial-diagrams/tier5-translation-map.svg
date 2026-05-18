@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="840" viewBox="0 0 1440 840">
+  <rect width="1440" height="840" fill="#f8fafc"/>
+  <text x="50" y="55" font-size="30" font-family="Arial, Helvetica, sans-serif" font-weight="700" fill="#0f172a">Tier 5 转译图：把架构事实翻译成实现路径与调参策略</text>
+  <text x="50" y="90" font-size="16" font-family="Arial, Helvetica, sans-serif" fill="#334155">第三章最想建立的是“架构事实 → 对实现的影响 → 参数空间与专属路径”的三段式思维，而不是背规格表</text>
+
+  <rect x="60" y="145" width="350" height="210" rx="16" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+  <text x="85" y="185" font-size="22" font-family="Arial, Helvetica, sans-serif" font-weight="700" fill="#1d4ed8">第一层：架构事实</text>
+  <text x="85" y="225" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">- 执行粒度：warp 32 / wavefront 64</text>
+  <text x="85" y="255" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">- 片上存储与缓存组织</text>
+  <text x="85" y="285" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">- Tensor Core / MFMA / 异步搬运能力</text>
+
+  <rect x="545" y="145" width="350" height="210" rx="16" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+  <text x="570" y="185" font-size="22" font-family="Arial, Helvetica, sans-serif" font-weight="700" fill="#15803d">第二层：对实现的影响</text>
+  <text x="570" y="225" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">- 哪种 tile 更自然</text>
+  <text x="570" y="255" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">- 哪些矩阵路径更容易走通</text>
+  <text x="570" y="285" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">- 流水、寄存器、片上缓存压力怎么变</text>
+
+  <rect x="1030" y="145" width="350" height="210" rx="16" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+  <text x="1055" y="185" font-size="22" font-family="Arial, Helvetica, sans-serif" font-weight="700" fill="#92400e">第三层：调参与实现动作</text>
+  <text x="1055" y="225" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">- 哪些参数范围值得搜</text>
+  <text x="1055" y="255" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">- 是否启用平台专属路径</text>
+  <text x="1055" y="285" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">- 代码是示意，还是最小可运行模板</text>
+
+  <path d="M410 250 L545 250" stroke="#64748b" stroke-width="4" fill="none" marker-end="url(#arrow)"/>
+  <path d="M895 250 L1030 250" stroke="#64748b" stroke-width="4" fill="none" marker-end="url(#arrow)"/>
+
+  <rect x="80" y="440" width="390" height="245" rx="16" fill="#ffffff" stroke="#94a3b8" stroke-width="2"/>
+  <text x="105" y="480" font-size="24" font-family="Arial, Helvetica, sans-serif" font-weight="700" fill="#0f172a">NVIDIA 侧常见翻译</text>
+  <text x="105" y="520" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">- Ampere：异步流水与 Tensor Core 路径重要</text>
+  <text x="105" y="550" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">- Ada：memory-bound 小算子更看重 fusion / locality</text>
+  <text x="105" y="580" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">- Hopper：更强搬运与协作能力会改变最优路径</text>
+
+  <rect x="525" y="440" width="390" height="245" rx="16" fill="#ffffff" stroke="#94a3b8" stroke-width="2"/>
+  <text x="550" y="480" font-size="24" font-family="Arial, Helvetica, sans-serif" font-weight="700" fill="#0f172a">AMD 侧常见翻译</text>
+  <text x="550" y="520" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">- wavefront 64 让相同并行配置更“重”</text>
+  <text x="550" y="550" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">- MFMA 友好路径会直接影响 tile / BLOCK_K</text>
+  <text x="550" y="580" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">- 参数空间应该单独搜，而不是抄 NVIDIA 最优值</text>
+
+  <rect x="970" y="440" width="390" height="245" rx="16" fill="#fee2e2" stroke="#ef4444" stroke-width="2"/>
+  <text x="995" y="480" font-size="24" font-family="Arial, Helvetica, sans-serif" font-weight="700" fill="#b91c1c">最危险的写法</text>
+  <text x="995" y="520" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">- 把架构概念写成“几行 API 必然能跑”</text>
+  <text x="995" y="550" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">- 把某代硬件最佳实践写成跨平台通用结论</text>
+  <text x="995" y="580" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">- 不区分结构示意和最小可运行模板</text>
+
+  <rect x="80" y="725" width="1280" height="80" rx="16" fill="#fff7ed" stroke="#f97316" stroke-width="2"/>
+  <text x="105" y="773" font-size="18" font-family="Arial, Helvetica, sans-serif" fill="#1e293b">真正可复用的 Tier 5 经验不是固定参数，而是这条链路：先讲事实，再讲影响，再讲哪些路径/参数值得搜，最后才决定能否给出可直接运行的代码。</text>
+
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L10,3 L0,6 z" fill="#64748b"/>
+    </marker>
+  </defs>
+</svg>
